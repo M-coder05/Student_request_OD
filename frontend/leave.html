@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Leave Application</title>
+    <link rel="stylesheet" href="../css/style.css" />
+  </head>
+  <body class="page-body">
+    <div class="container form-page">
+      <div class="page-head">
+        <h2>Leave Application</h2>
+        <a class="btn btn-secondary" href="dashboard.html">Back to Dashboard</a>
+      </div>
+
+      <form id="leaveForm" class="card form-card">
+        <div class="two-col">
+          <div class="field-wrap">
+            <label>Student Name</label>
+            <input type="text" name="studentName" required readonly />
+          </div>
+          <div class="field-wrap">
+            <label>Register Number</label>
+            <input type="text" name="registerNumber" required readonly />
+          </div>
+        </div>
+
+        <div class="two-col">
+          <div class="field-wrap">
+            <label>Department</label>
+            <input type="text" name="department" required readonly />
+          </div>
+          <div class="field-wrap">
+            <label>From Date</label>
+            <input type="date" name="fromDate" required />
+          </div>
+        </div>
+
+        <div class="two-col">
+          <div class="field-wrap">
+            <label>To Date</label>
+            <input type="date" name="toDate" required />
+          </div>
+          <div class="field-wrap">
+            <label>Reason</label>
+            <input type="text" name="reason" placeholder="Enter leave reason" required />
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Submit Leave Request</button>
+      </form>
+    </div>
+
+    <div id="toast" class="toast"></div>
+    <script src="../js/api.js"></script>
+    <script src="../js/leave.js"></script>
+    <script src="../js/demo.js"></script>
+  </body>
+</html>

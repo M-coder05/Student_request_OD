@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Bonafide Request</title>
+    <link rel="stylesheet" href="../css/style.css" />
+  </head>
+  <body class="page-body">
+    <div class="container form-page">
+      <div class="page-head">
+        <h2>Bonafide Certificate Request</h2>
+        <a class="btn btn-secondary" href="dashboard.html">Back to Dashboard</a>
+      </div>
+
+      <form id="bonafideForm" class="card form-card">
+        <div class="two-col">
+          <div class="field-wrap">
+            <label>Student Name</label>
+            <input type="text" name="studentName" readonly required />
+          </div>
+          <div class="field-wrap">
+            <label>Register Number</label>
+            <input type="text" name="registerNumber" readonly required />
+          </div>
+        </div>
+
+        <div class="two-col">
+          <div class="field-wrap">
+            <label>Department</label>
+            <input type="text" name="department" readonly required />
+          </div>
+          <div class="field-wrap">
+            <label>Year</label>
+            <input type="text" name="year" readonly required />
+          </div>
+        </div>
+
+        <div class="two-col">
+          <div class="field-wrap">
+            <label>Semester</label>
+            <input type="text" name="semester" readonly required />
+          </div>
+          <div class="field-wrap">
+            <label>Purpose</label>
+            <select name="purpose" required>
+              <option value="">Select purpose</option>
+              <option value="Scholarship">Scholarship</option>
+              <option value="Bank Loan">Bank Loan</option>
+              <option value="Passport">Passport</option>
+              <option value="Internship">Internship</option>
+              <option value="Higher Education">Higher Education</option>
+              <option value="Bus Pass">Bus Pass</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field-wrap">
+          <label>Additional Details</label>
+          <textarea name="additionalDetails" rows="4" placeholder="Enter more details"></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Request Bonafide</button>
+      </form>
+    </div>
+
+    <div id="toast" class="toast"></div>
+    <script src="../js/api.js"></script>
+    <script src="../js/bonafide.js"></script>
+    <script src="../js/demo.js"></script>
+  </body>
+</html>

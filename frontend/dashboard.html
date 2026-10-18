@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Student Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link rel="stylesheet" href="../css/style.css" />
+  </head>
+  <body>
+    <header class="topbar inner-header">
+      <div class="container nav-wrap">
+        <div class="brand">
+          <span class="brand-mark">SS</span>
+          <span>Student Dashboard</span>
+        </div>
+        <nav class="main-nav">
+          <a href="dashboard.html">Dashboard</a>
+          <a href="status.html">Status</a>
+          <a href="profile.html">Profile</a>
+        </nav>
+        <button id="logoutBtn" class="btn btn-secondary">Logout</button>
+      </div>
+    </header>
+
+    <main class="page-shell">
+      <div class="container">
+        <section class="welcome card">
+          <div>
+            <span class="eyebrow">Welcome back</span>
+            <h2 id="studentName">Student</h2>
+          </div>
+          <div class="profile-summary">
+            <span id="studentReg">Reg No: --</span>
+            <span id="studentDept">Dept: --</span>
+            <span id="studentYear">Year: --</span>
+          </div>
+        </section>
+
+        <section class="stats-grid">
+          <div class="stat-card"><span class="stat-label">Total Requests</span><strong id="totalRequests">0</strong></div>
+          <div class="stat-card"><span class="stat-label">Pending</span><strong id="pendingRequests">0</strong></div>
+          <div class="stat-card"><span class="stat-label">Approved</span><strong id="approvedRequests">0</strong></div>
+          <div class="stat-card"><span class="stat-label">Rejected</span><strong id="rejectedRequests">0</strong></div>
+        </section>
+
+        <section class="service-grid dashboard-grid">
+          <a class="service-card dash-card" href="leave.html">
+            <div class="icon-wrap"><i class="fas fa-user-check"></i></div>
+            <h3>Apply Leave</h3>
+            <p>Submit a leave request.</p>
+          </a>
+          <a class="service-card dash-card" href="od.html">
+            <div class="icon-wrap"><i class="fas fa-calendar-days"></i></div>
+            <h3>Apply OD</h3>
+            <p>Submit an on-duty form.</p>
+          </a>
+          <a class="service-card dash-card" href="bonafide.html">
+            <div class="icon-wrap"><i class="fas fa-file-alt"></i></div>
+            <h3>Bonafide</h3>
+            <p>Request a certificate.</p>
+          </a>
+          <a class="service-card dash-card" href="complaint.html">
+            <div class="icon-wrap"><i class="fas fa-comments"></i></div>
+            <h3>Complaint</h3>
+            <p>Report issues and concerns.</p>
+          </a>
+          <a class="service-card dash-card" href="status.html">
+            <div class="icon-wrap"><i class="fas fa-chart-line"></i></div>
+            <h3>Track Requests</h3>
+            <p>Monitor request status.</p>
+          </a>
+          <a class="service-card dash-card" href="profile.html">
+            <div class="icon-wrap"><i class="fas fa-user"></i></div>
+            <h3>My Profile</h3>
+            <p>View and edit profile.</p>
+          </a>
+        </section>
+      </div>
+    </main>
+
+    <div id="toast" class="toast"></div>
+    <script src="../js/api.js"></script>
+    <script src="../js/dashboard.js"></script>
+    <script src="../js/demo.js"></script>
+  </body>
+</html>

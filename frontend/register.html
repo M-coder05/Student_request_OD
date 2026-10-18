@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Student Registration | Smart Student Service Portal</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../css/style.css" />
+  </head>
+  <body class="auth-body student-auth register-auth">
+    <main class="student-auth-shell register-shell">
+      <aside class="auth-aside">
+        <a class="site-brand auth-brand" href="index.html" aria-label="Smart Student Service Portal home"><span class="site-brand-mark" aria-hidden="true">SS</span><span class="site-brand-name">Smart Student <span>Service Portal</span></span></a>
+        <div class="auth-aside-content"><span class="auth-aside-kicker">A BETTER WAY TO GET THINGS DONE</span><h1>Make campus<br />services simpler.</h1><p>Create your student account to submit service requests and follow their status in one place.</p><div class="auth-aside-rule"><span></span><span></span><span></span></div><a href="index.html#services">See available services <span aria-hidden="true">↗</span></a></div>
+        <span class="auth-aside-footer">One student account. Connected campus services.</span>
+      </aside>
+      <section class="auth-panel auth-panel-form student-auth-panel register-panel" aria-labelledby="register-title">
+        <div class="auth-panel-heading"><span class="auth-panel-kicker">STUDENT ACCOUNT</span><h2 id="register-title">Create your account</h2><p class="muted">Enter your details to get started.</p></div>
+
+        <form id="registerForm" class="auth-form">
+          <div class="two-col">
+            <div class="field-wrap">
+              <label for="register-name">Full Name</label>
+              <input id="register-name" type="text" name="name" placeholder="Enter your full name" autocomplete="name" required />
+            </div>
+            <div class="field-wrap">
+              <label for="register-number">Register Number</label>
+              <input id="register-number" type="text" name="registerNumber" placeholder="Enter your register number" autocomplete="username" required />
+            </div>
+          </div>
+
+          <div class="two-col">
+            <div class="field-wrap">
+              <label for="register-email">Email</label>
+              <input id="register-email" type="email" name="email" placeholder="you@example.com" autocomplete="email" required />
+            </div>
+            <div class="field-wrap">
+              <label for="register-phone">Phone</label>
+              <input id="register-phone" type="tel" name="phone" placeholder="Enter your phone number" autocomplete="tel" required />
+            </div>
+          </div>
+
+          <div class="two-col">
+            <div class="field-wrap">
+              <label for="register-department">Department</label>
+              <select id="register-department" name="department" autocomplete="organization-title" required>
+                <option value="">Select department</option>
+                <option value="Computer Science">Computer Science</option>
+                <option value="Information Technology">Information Technology</option>
+                <option value="Electronics & Communication">Electronics & Communication</option>
+                <option value="Mechanical">Mechanical</option>
+                <option value="Civil">Civil</option>
+                <option value="Electrical">Electrical</option>
+                <option value="MBA">MBA</option>
+              </select>
+            </div>
+            <div class="field-wrap">
+              <label for="register-year">Year</label>
+              <select id="register-year" name="year" required>
+                <option value="">Select year</option>
+                <option value="I">I</option>
+                <option value="II">II</option>
+                <option value="III">III</option>
+                <option value="IV">IV</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="two-col">
+            <div class="field-wrap">
+              <label for="register-semester">Semester</label>
+              <select id="register-semester" name="semester" required>
+                <option value="">Select semester</option>
+                <option value="1">Semester 1</option>
+                <option value="2">Semester 2</option>
+                <option value="3">Semester 3</option>
+                <option value="4">Semester 4</option>
+                <option value="5">Semester 5</option>
+                <option value="6">Semester 6</option>
+                <option value="7">Semester 7</option>
+                <option value="8">Semester 8</option>
+              </select>
+            </div>
+            <div class="field-wrap">
+              <label for="register-password">Password</label>
+              <div class="password-field"><input id="register-password" type="password" name="password" placeholder="Create a password" autocomplete="new-password" required /><button class="password-toggle" type="button" data-password-toggle aria-controls="register-password" aria-label="Show password">Show</button></div>
+            </div>
+          </div>
+
+          <div class="field-wrap">
+            <label for="register-confirm-password">Confirm Password</label>
+            <div class="password-field"><input id="register-confirm-password" type="password" name="confirmPassword" placeholder="Re-enter your password" autocomplete="new-password" required /><button class="password-toggle" type="button" data-password-toggle aria-controls="register-confirm-password" aria-label="Show password">Show</button></div>
+          </div>
+
+          <button type="submit" class="btn btn-primary full-width auth-submit">Create account <span aria-hidden="true">↗</span></button>
+        </form>
+
+        <p class="auth-link">Already registered? <a href="login.html">Sign in</a></p>
+        <a class="auth-home-link" href="index.html"><span aria-hidden="true">←</span> Back to home</a>
+      </section>
+    </main>
+
+    <div id="toast" class="toast" role="status" aria-live="polite" aria-atomic="true"></div>
+    <script src="../js/api.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/demo.js"></script>
+  </body>
+</html>

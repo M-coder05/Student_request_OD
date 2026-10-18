@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Student Login | Smart Student Service Portal</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="../css/style.css" />
+  </head>
+  <body class="auth-body student-auth login-auth">
+    <main class="student-auth-shell">
+      <aside class="auth-aside">
+        <a class="site-brand auth-brand" href="index.html" aria-label="Smart Student Service Portal home"><span class="site-brand-mark" aria-hidden="true">SS</span><span class="site-brand-name">Smart Student <span>Service Portal</span></span></a>
+        <div class="auth-aside-content"><span class="auth-aside-kicker">YOUR CAMPUS SERVICES, CONNECTED</span><h1>Welcome back<br />to your portal.</h1><p>Pick up where you left off. Your student services and submitted requests are ready when you are.</p><div class="auth-aside-rule"><span></span><span></span><span></span></div><a href="index.html#services">Explore student services <span aria-hidden="true">↗</span></a></div>
+        <span class="auth-aside-footer">A simpler way to stay on top of campus requests.</span>
+      </aside>
+      <section class="auth-panel auth-panel-form student-auth-panel" aria-labelledby="login-title">
+        <div class="auth-panel-heading"><span class="auth-panel-kicker">STUDENT ACCOUNT</span><h2 id="login-title">Sign in to continue</h2><p class="muted">Use your register number and password.</p></div>
+
+        <form id="loginForm" class="auth-form">
+          <div class="field-wrap">
+            <label for="login-register-number">Register Number or Email</label>
+            <input id="login-register-number" type="text" name="registerNumber" placeholder="Enter register number or email" autocomplete="username" required />
+          </div>
+
+          <div class="field-wrap">
+            <label for="login-password">Password</label>
+            <div class="password-field"><input id="login-password" type="password" name="password" placeholder="Enter your password" autocomplete="current-password" required /><button class="password-toggle" type="button" data-password-toggle aria-controls="login-password" aria-label="Show password">Show</button></div>
+          </div>
+
+          <button type="submit" class="btn btn-primary full-width auth-submit">Sign in <span aria-hidden="true">↗</span></button>
+        </form>
+
+        <section class="demo-access-card" data-demo-panel aria-labelledby="demo-access-title">
+          <div class="demo-access-heading"><div><span class="auth-panel-kicker">GUIDED ACCESS</span><h3 id="demo-access-title">Try a demo account</h3></div><span class="demo-label">DEMO</span></div>
+          <p class="demo-access-status" data-demo-status role="status" aria-live="polite">Checking demo access…</p>
+          <div class="demo-account-list">
+            <article class="demo-account">
+              <div><strong>Student demo</strong><span>Email <code data-demo-email="student">Checking…</code></span><span>Password <code data-demo-password="student">Checking…</code></span></div>
+              <button class="btn btn-secondary" type="button" data-demo-role="student">Login as Student Demo</button>
+            </article>
+            <article class="demo-account">
+              <div><strong>Admin demo</strong><span>Email <code data-demo-email="admin">Checking…</code></span><span>Password <code data-demo-password="admin">Checking…</code></span></div>
+              <button class="btn btn-secondary" type="button" data-demo-role="admin">Login as Admin Demo</button>
+            </article>
+          </div>
+        </section>
+
+        <p class="auth-link">New to the portal? <a href="register.html">Create an account</a></p>
+        <a class="auth-home-link" href="index.html"><span aria-hidden="true">←</span> Back to home</a>
+      </section>
+    </main>
+
+    <div id="toast" class="toast" role="status" aria-live="polite" aria-atomic="true"></div>
+    <script src="../js/api.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/demo.js"></script>
+  </body>
+</html>

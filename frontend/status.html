@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Request Status</title>
+    <link rel="stylesheet" href="../css/style.css" />
+  </head>
+  <body>
+    <header class="topbar inner-header">
+      <div class="container nav-wrap">
+        <div class="brand">
+          <span class="brand-mark">SS</span>
+          <span>Request Status</span>
+        </div>
+        <div class="nav-actions">
+          <a class="btn btn-secondary" href="dashboard.html">Dashboard</a>
+        </div>
+      </div>
+    </header>
+
+    <main class="page-shell">
+      <div class="container">
+        <div class="toolbar">
+          <div class="filter-group">
+            <label>Request Type</label>
+            <select id="requestTypeFilter">
+              <option value="All">All</option>
+              <option value="Leave">Leave</option>
+              <option value="OD">OD</option>
+              <option value="Bonafide">Bonafide</option>
+              <option value="Complaint">Complaint</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label>Status</label>
+            <select id="statusFilter">
+              <option value="All">All</option>
+              <option value="Pending">Pending</option>
+              <option value="Approved">Approved</option>
+              <option value="Rejected">Rejected</option>
+              <option value="In Progress">In Progress</option>
+              <option value="Resolved">Resolved</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="table-wrap card">
+          <table>
+            <thead>
+              <tr>
+                <th>Request ID</th>
+                <th>Type</th>
+                <th>Submitted</th>
+                <th>Status</th>
+                <th>Remark</th>
+              </tr>
+            </thead>
+            <tbody id="statusTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+
+    <div id="toast" class="toast"></div>
+    <script src="../js/api.js"></script>
+    <script src="../js/status.js"></script>
+    <script src="../js/demo.js"></script>
+  </body>
+</html>
