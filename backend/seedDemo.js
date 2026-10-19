@@ -58,6 +58,7 @@ const seedDemo = async () => {
         password: studentPassword,
         role: 'student',
         isDemo: true,
+        isActive: true,
       },
     },
     { new: true, upsert: true, runValidators: true, setDefaultsOnInsert: true }
@@ -77,6 +78,7 @@ const seedDemo = async () => {
         password: adminPassword,
         role: 'demo_admin',
         isDemo: true,
+        isActive: true,
       },
     },
     { new: true, upsert: true, runValidators: true, setDefaultsOnInsert: true }

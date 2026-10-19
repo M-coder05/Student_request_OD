@@ -135,14 +135,18 @@ const loginUser = async (req, res) => {
 };
 
 const getDemoAvailability = async (req, res) => {
-  if (!isDemoModeEnabled() || !hasDemoCredentials()) {
-    return res.status(200).json({ enabled: false, roles: {} });
+  if (!isDemoModeEnabled()) {
+    return res.status(200).json({ enabled: false, reason: 'disabled', roles: {} });
+  }
+
+  if (!hasDemoCredentials()) {
+    return res.status(200).json({ enabled: false, reason: 'missing_credentials', roles: {} });
   }
 
   const accounts = getDemoAccounts();
   const [student, admin] = await Promise.all([
-    User.findOne({ email: accounts.student.email, role: 'student', isDemo: true }).select('_id'),
-    User.findOne({ email: accounts.admin.email, role: 'demo_admin', isDemo: true }).select('_id'),
+    User.findOne({ email: accounts.student.email, role: 'student', isDemo: true, isActive: { $ne: false } }).select('_id'),
+    User.findOne({ email: accounts.admin.email, role: 'demo_admin', isDemo: true, isActive: { $ne: false } }).select('_id'),
   ]);
 
   res.status(200).json({
@@ -151,7 +155,6 @@ const getDemoAvailability = async (req, res) => {
       student: {
         available: Boolean(student),
         email: student ? accounts.student.email : '',
-        password: student ? accounts.student.password : '',
       },
       admin: {
         available: Boolean(admin),
@@ -174,9 +177,14 @@ const loginDemo = async (req, res) => {
     return res.status(400).json({ message: 'Select a valid demo role' });
   }
 
-  const user = await User.findOne({ email: account.email, role: account.role, isDemo: true });
+  const user = await User.findOne({
+    email: account.email,
+    role: account.role,
+    isDemo: true,
+    isActive: { $ne: false },
+  });
 
-  if (!user || user.isActive === false || !(await bcrypt.compare(account.password, user.password))) {
+  if (!user || !(await bcrypt.compare(account.password, user.password))) {
     return res.status(503).json({ message: 'Demo account is unavailable. Run npm run seed:demo and try again.' });
   }
 

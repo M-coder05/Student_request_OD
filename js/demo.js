@@ -34,6 +34,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     status.classList.toggle('demo-status-error', isError);
   };
 
+  const setUnavailable = () => {
+    buttons.forEach((button) => {
+      button.disabled = true;
+    });
+    demoPanel.querySelectorAll('[data-demo-email]').forEach((email) => {
+      email.textContent = 'Unavailable';
+    });
+  };
+
   buttons.forEach((button) => {
     button.disabled = true;
     button.addEventListener('click', async () => {
@@ -67,7 +76,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   try {
     const config = await apiRequest('/auth/demo/config');
     if (!config.enabled) {
-      setStatus('Demo accounts are not configured for this environment.');
+      setUnavailable();
+      setStatus(config.reason === 'missing_credentials'
+        ? 'Demo passwords are missing. Add both demo passwords to .env and restart the server.'
+        : 'Demo access is disabled. Set DEMO_MODE=true in .env and restart the server.');
       return;
     }
 
@@ -86,6 +98,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       ? 'Demo access is ready. Changes affect sample data only.'
       : 'Seed demo accounts with npm run seed:demo to enable access.', availableCount !== buttons.length);
   } catch (error) {
-    setStatus(error.message || 'Unable to check demo account availability.', true);
+    setUnavailable();
+    setStatus('Unable to check demo access. Confirm the backend is running, then reload this page.', true);
   }
 });

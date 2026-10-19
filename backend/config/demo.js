@@ -18,7 +18,7 @@ const isDemoModeEnabled = () => process.env.DEMO_MODE === 'true';
 
 const hasDemoCredentials = () => {
   const accounts = getDemoAccounts();
-  return Boolean(accounts.student.password && accounts.admin.password);
+  return Boolean(accounts.student.password?.trim() && accounts.admin.password?.trim());
 };
 
 const isDemoUser = (user) => Boolean(user && user.isDemo === true);
