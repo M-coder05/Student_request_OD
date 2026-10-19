@@ -1,5 +1,11 @@
 const adminMiddleware = (req, res, next) => {
-  if (!req.user || req.user.role !== 'admin') {
+  const authorizedRole = req.user && (
+    (req.user.role === 'super_admin' && req.user.isDemo !== true) ||
+    (req.user.role === 'admin' && req.user.isDemo !== true) ||
+    (req.user.role === 'demo_admin' && req.user.isDemo === true)
+  );
+
+  if (!authorizedRole) {
     return res.status(403).json({ message: 'Forbidden: Admin access required' });
   }
 

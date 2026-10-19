@@ -87,8 +87,8 @@ document.addEventListener('DOMContentLoaded', () => {
           body: JSON.stringify(payload),
         });
 
-        if (result.user.role !== 'admin') {
-          throw new Error('Access denied. Admin account required.');
+        if (!['admin', 'super_admin'].includes(result.user.role)) {
+          throw new Error('Access denied. Permanent Super Admin account required.');
         }
 
         localStorage.setItem('token', result.token);

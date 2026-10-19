@@ -10,13 +10,11 @@ const getDemoAccounts = () => ({
   admin: {
     email: DEMO_ADMIN_EMAIL,
     password: process.env.DEMO_ADMIN_PASSWORD,
-    role: 'admin',
+    role: 'demo_admin',
   },
 });
 
-const isDemoModeEnabled = () => (
-  process.env.NODE_ENV !== 'production' && process.env.DEMO_MODE === 'true'
-);
+const isDemoModeEnabled = () => process.env.DEMO_MODE === 'true';
 
 const hasDemoCredentials = () => {
   const accounts = getDemoAccounts();

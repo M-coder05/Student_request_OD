@@ -321,9 +321,19 @@ tbody tr:hover { background: #f8fbfc; }
 .profile-layout { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
 .profile-card { padding: 23px; }
 .profile-card h3,.admin-section h3 { margin: 0 0 18px; color: var(--navy-950); font-size: 1.12rem; }
-.admin-stats { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+.admin-stats { grid-template-columns: repeat(7, minmax(0, 1fr)); }
 .admin-section { padding: 20px; margin-top: 0; }
 .admin-status-select { min-width: 135px; min-height: 35px; padding: 5px 8px; border: 1px solid #d7e1ea; border-radius: 7px; background: #fff; color: var(--ink); font-size: 0.74rem; }
+.admin-table-heading { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 14px; }
+.admin-table-heading h3 { margin: 0 auto 0 0; }
+.admin-table-heading input,.admin-table-heading select,.admin-filters select,.admin-filters input { min-height: 36px; padding: 7px 9px; border: 1px solid #d7e1ea; border-radius: 6px; background: #fff; color: var(--ink); font: inherit; font-size: 0.75rem; }
+.admin-search-label { color: var(--muted); font-size: 0.73rem; }
+.admin-filters { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; }
+.admin-filters label { display: flex; align-items: center; gap: 5px; color: var(--muted); font-size: 0.72rem; }
+.admin-pagination { display: flex; align-items: center; justify-content: flex-end; gap: 8px; padding-top: 12px; color: var(--muted); font-size: 0.75rem; }
+.admin-pagination span { margin-right: auto; }
+.admin-pagination button:disabled { opacity: 0.5; cursor: not-allowed; }
+.admin-activity-list { display: grid; gap: 8px; padding-left: 20px; color: var(--ink); font-size: 0.78rem; overflow-wrap: anywhere; }
 .toast { position: fixed; right: 18px; bottom: 18px; z-index: 999; max-width: min(420px, calc(100% - 32px)); padding: 12px 16px; border: 1px solid #d7e1e8; border-radius: 9px; background: #fff; color: var(--navy-950); box-shadow: var(--shadow); opacity: 0; pointer-events: none; transform: translateY(12px); transition: opacity 180ms ease, transform 180ms ease; }
 .toast.show { opacity: 1; transform: translateY(0); }
 .status-timeline { display: grid; gap: 0; }
@@ -435,6 +445,9 @@ tbody tr:hover { background: #f8fbfc; }
   .demo-account { align-items: stretch; flex-direction: column; }
   .demo-account button { width: 100%; }
   .demo-banner { justify-content: space-between; gap: 7px; font-size: 0.65rem; }
+  .admin-filters { width: 100%; }
+  .admin-filters input,.admin-filters select { flex: 1 1 130px; min-width: 0; }
+  .admin-pagination { flex-wrap: wrap; }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -1,4 +1,6 @@
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = window.location.protocol === 'file:'
+  ? 'http://localhost:5000/api'
+  : `${window.location.origin}/api`;
 
 function getAuthToken() {
   return localStorage.getItem('token');
@@ -52,7 +54,7 @@ function redirectIfNotAuthenticated() {
 
 function redirectIfNotAdmin() {
   const user = JSON.parse(localStorage.getItem('user') || '{}');
-  if (!localStorage.getItem('token') || user.role !== 'admin') {
+  if (!localStorage.getItem('token') || !['admin', 'super_admin', 'demo_admin'].includes(user.role)) {
     window.location.href = 'admin-login.html';
     return true;
   }

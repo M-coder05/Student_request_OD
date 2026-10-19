@@ -11,7 +11,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const banner = document.createElement('aside');
     banner.className = 'demo-banner';
     banner.setAttribute('role', 'status');
-    banner.innerHTML = '<span><strong>Demo account</strong> · Changes are limited to demo data and may be reset.</span><button type="button" data-demo-exit>Exit demo</button>';
+    banner.innerHTML = '<span><strong>DEMO MODE</strong> · Changes are limited to sample data and may be reset.</span><button type="button" data-demo-exit>Exit demo</button>';
     document.body.prepend(banner);
     banner.querySelector('[data-demo-exit]').addEventListener('click', () => {
       localStorage.removeItem('token');
@@ -27,6 +27,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   const status = demoPanel.querySelector('[data-demo-status]');
   const buttons = [...demoPanel.querySelectorAll('[data-demo-role]')];
+  const roles = buttons.map((button) => button.dataset.demoRole);
 
   const setStatus = (message, isError = false) => {
     status.textContent = message;
@@ -70,22 +71,20 @@ document.addEventListener('DOMContentLoaded', async () => {
       return;
     }
 
-    ['student', 'admin'].forEach((role) => {
+    roles.forEach((role) => {
       const account = config.roles[role];
       const button = demoPanel.querySelector(`[data-demo-role="${role}"]`);
       const email = demoPanel.querySelector(`[data-demo-email="${role}"]`);
-      const password = demoPanel.querySelector(`[data-demo-password="${role}"]`);
 
       button.dataset.available = String(Boolean(account?.available));
       button.disabled = !account?.available;
       email.textContent = account?.email || 'Not seeded';
-      password.textContent = account?.password || 'Not available';
     });
 
     const availableCount = buttons.filter((button) => button.dataset.available === 'true').length;
-    setStatus(availableCount === 2
-      ? 'Both demo roles are ready. Choose a role to sign in.'
-      : 'Seed demo accounts with npm run seed:demo to enable access.', availableCount !== 2);
+    setStatus(availableCount === buttons.length
+      ? 'Demo access is ready. Changes affect sample data only.'
+      : 'Seed demo accounts with npm run seed:demo to enable access.', availableCount !== buttons.length);
   } catch (error) {
     setStatus(error.message || 'Unable to check demo account availability.', true);
   }

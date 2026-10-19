@@ -18,6 +18,14 @@ const odRequestSchema = new mongoose.Schema(
     },
     adminRemark: { type: String, default: '' },
     requestId: { type: String, unique: true, required: true },
+    statusHistory: [{
+      fromStatus: { type: String },
+      toStatus: { type: String, required: true },
+      adminId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+      adminName: { type: String, required: true },
+      changedAt: { type: Date, default: Date.now },
+      remark: { type: String, default: '' },
+    }],
   },
   { timestamps: true }
 );

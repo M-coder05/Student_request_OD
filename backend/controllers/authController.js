@@ -111,6 +111,9 @@ const loginUser = async (req, res) => {
   if (!isMatch) {
     return res.status(401).json({ message: 'Invalid credentials' });
   }
+  if (user.isActive === false) {
+    return res.status(401).json({ message: 'Invalid credentials' });
+  }
 
   const token = generateToken(user);
 
@@ -139,7 +142,7 @@ const getDemoAvailability = async (req, res) => {
   const accounts = getDemoAccounts();
   const [student, admin] = await Promise.all([
     User.findOne({ email: accounts.student.email, role: 'student', isDemo: true }).select('_id'),
-    User.findOne({ email: accounts.admin.email, role: 'admin', isDemo: true }).select('_id'),
+    User.findOne({ email: accounts.admin.email, role: 'demo_admin', isDemo: true }).select('_id'),
   ]);
 
   res.status(200).json({
@@ -153,7 +156,6 @@ const getDemoAvailability = async (req, res) => {
       admin: {
         available: Boolean(admin),
         email: admin ? accounts.admin.email : '',
-        password: admin ? accounts.admin.password : '',
       },
     },
   });
@@ -174,7 +176,7 @@ const loginDemo = async (req, res) => {
 
   const user = await User.findOne({ email: account.email, role: account.role, isDemo: true });
 
-  if (!user || !(await bcrypt.compare(account.password, user.password))) {
+  if (!user || user.isActive === false || !(await bcrypt.compare(account.password, user.password))) {
     return res.status(503).json({ message: 'Demo account is unavailable. Run npm run seed:demo and try again.' });
   }
 

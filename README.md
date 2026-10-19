@@ -97,19 +97,31 @@ PORT=5000
 MONGO_URI=mongodb://127.0.0.1:27017/smartStudentPortal
 JWT_SECRET=your_secret_key
 JWT_EXPIRES_IN=7d
+DEMO_MODE=true
+DEMO_STUDENT_PASSWORD=choose_a_demo_student_password
+DEMO_ADMIN_PASSWORD=choose_a_demo_admin_password
+SUPER_ADMIN_NAME=Portal Owner
+SUPER_ADMIN_REGISTER_NUMBER=SUPER-ADMIN-01
+SUPER_ADMIN_EMAIL=owner@example.com
+SUPER_ADMIN_PASSWORD=choose_a_unique_password_at_least_12_characters
+SUPER_ADMIN_PHONE=0000000000
 ```
+
+Keep `.env` out of version control. Generate a long random `JWT_SECRET` and a unique Super Admin password; never put either value in frontend files or commit them to the repository.
 
 ## Run MongoDB
 
 Start MongoDB locally or use MongoDB Atlas.
 
-## Create admin user
+## Create the Permanent Super Admin
+
+Set `SUPER_ADMIN_EMAIL` and `SUPER_ADMIN_PASSWORD` in `.env` before running the seed. The password must be at least 12 characters and is hashed with bcrypt before storage in MongoDB.
 
 ```bash
 npm run seed:admin
 ```
 
-Admin credentials created by the script can be customized in the file.
+This creates or updates the database-backed `super_admin` account. The account and role persist across restarts and deployments that retain the same database. Re-running this command updates its password from the current environment value. Existing data is not deleted. The Super Admin cannot be disabled through the admin API. The seeder also disables the exact legacy `admin@portal.com` / `ADMIN001` bootstrap account if present; its record and related data are retained.
 
 ## Start backend
 
@@ -131,21 +143,23 @@ MongoDB is a separate process or service and will keep running. Stop it separate
 
 ## Demo accounts
 
-Demo access is intended for local evaluation only and is disabled automatically when `NODE_ENV=production`. Copy the demo variables from `.env.example` into your local `.env`, then seed the reserved demo accounts and sample requests:
+Demo access is opt-in through `DEMO_MODE=true`. Configure distinct demo passwords, then seed the reserved demo accounts and sample requests:
 
 ```bash
 npm run seed:demo
 npm start
 ```
 
-The login pages show the credentials only after the server confirms that each demo account exists. Their one-click buttons use the normal JWT authentication flow. The student demo can submit requests; the admin demo can review and update only requests belonging to the demo student. Re-running `npm run seed:demo` resets those demo requests without deleting or changing other users' records.
+The login pages show demo emails and one-click login only after the server confirms that each account exists. Passwords are never returned by the API or shown in frontend code. The demo administrator uses the separate `demo_admin` role and can only review sample data belonging to the demo student. Re-running `npm run seed:demo` resets that sample student's requests without changing other users' records. The backend enforces this isolation even when callers bypass the UI. Set `DEMO_MODE=false` (or omit it) to disable demo sign-in, including in production.
 
-Demo sign-in details for local evaluation:
+Demo account identifiers (passwords remain private in `.env`):
 
-- Student: `student.demo@example.com` / `StudentDemo@123`
-- Admin: `admin.demo@example.com` / `AdminDemo@123`
+- Student email: `student.demo@example.com` (`DEMO_STUDENT_PASSWORD`)
+- Admin email: `admin.demo@example.com` (`DEMO_ADMIN_PASSWORD`)
 
-To walk through the workflow, sign in as the student and submit a leave, OD, bonafide, or complaint request. Then exit the demo, sign in as the admin, update that request's status, and sign back in as the student to confirm the recorded status. Never use these accounts in a production deployment.
+To walk through the workflow, use Student Demo to submit a request, then Admin Demo to update it and inspect its status history. Demo changes stay within sample records and may be reset by rerunning the seed.
+
+The login page links to a separate administrator screen with Permanent Super Admin Login and Admin Demo Login. Admin APIs reload account state from MongoDB per request. Status changes and account enable/disable actions are recorded in an audit log.
 
 ## Access app
 
@@ -182,6 +196,9 @@ Open the static frontend files in your browser or serve via a local static serve
 
 - GET /api/admin/dashboard
 - GET /api/admin/students
+- GET /api/admin/users
+- PATCH /api/admin/users/:id/access
 - GET /api/admin/requests
+- GET /api/admin/activity
 - PATCH /api/admin/requests/:id/status
 ```

@@ -21,6 +21,7 @@
       <div class="container">
         <section class="stats-grid admin-stats">
           <div class="stat-card"><span class="stat-label">Total Students</span><strong id="totalStudents">0</strong></div>
+          <div class="stat-card"><span class="stat-label">Registered Users</span><strong id="totalUsers">0</strong></div>
           <div class="stat-card"><span class="stat-label">Total Requests</span><strong id="totalRequests">0</strong></div>
           <div class="stat-card"><span class="stat-label">Pending</span><strong id="pendingRequests">0</strong></div>
           <div class="stat-card"><span class="stat-label">Approved</span><strong id="approvedRequests">0</strong></div>
@@ -29,7 +30,7 @@
         </section>
 
         <section class="card admin-section">
-          <h3>Students</h3>
+          <div class="admin-table-heading"><h3>Students</h3><label class="admin-search-label" for="studentSearch">Search students</label><input id="studentSearch" type="search" placeholder="Name, register number, email" /><select id="studentSort" aria-label="Sort students"><option value="createdAt:desc">Newest first</option><option value="name:asc">Name A–Z</option><option value="name:desc">Name Z–A</option></select></div>
           <div class="table-wrap">
             <table>
               <thead>
@@ -45,10 +46,27 @@
               <tbody id="studentsTableBody"></tbody>
             </table>
           </div>
+          <div class="admin-pagination"><span id="studentsPageInfo">Page 1</span><button type="button" class="btn btn-secondary" id="studentsPrev">Previous</button><button type="button" class="btn btn-secondary" id="studentsNext">Next</button></div>
         </section>
 
         <section class="card admin-section">
-          <h3>Manage Requests</h3>
+          <div class="admin-table-heading"><h3>Account Management</h3><input id="userSearch" type="search" aria-label="Search users" placeholder="Name, email, role" /><select id="userSort" aria-label="Sort users"><option value="createdAt:desc">Newest first</option><option value="name:asc">Name A–Z</option><option value="role:asc">Role A–Z</option></select></div>
+          <div class="table-wrap"><table>
+            <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Account</th><th>Action</th></tr></thead>
+            <tbody id="adminUsersTableBody"></tbody>
+          </table></div>
+          <div class="admin-pagination"><span id="usersPageInfo">Page 1</span><button type="button" class="btn btn-secondary" id="usersPrev">Previous</button><button type="button" class="btn btn-secondary" id="usersNext">Next</button></div>
+        </section>
+
+        <section class="card admin-section">
+          <div class="admin-table-heading"><h3>Manage Requests</h3><div class="admin-filters">
+            <input id="requestSearch" type="search" aria-label="Search requests" placeholder="Search ID or student" />
+            <select id="requestStatusFilter" aria-label="Filter by status"><option value="">All statuses</option><option>Pending</option><option>Approved</option><option>Rejected</option><option>In Progress</option><option>Resolved</option></select>
+            <select id="requestTypeFilter" aria-label="Filter by type"><option value="">All types</option><option>Leave</option><option>OD</option><option>Bonafide</option><option>Complaint</option></select>
+            <select id="requestSort" aria-label="Sort requests"><option value="createdAt:desc">Newest first</option><option value="createdAt:asc">Oldest first</option><option value="studentName:asc">Student A–Z</option><option value="status:asc">Status A–Z</option><option value="type:asc">Type A–Z</option></select>
+            <label>From <input id="requestFrom" type="date" /></label><label>To <input id="requestTo" type="date" /></label>
+            <button type="button" class="btn btn-secondary" id="applyRequestFilters">Filter</button>
+          </div></div>
           <div class="table-wrap">
             <table>
               <thead>
@@ -59,11 +77,18 @@
                   <th>Status</th>
                   <th>Submitted</th>
                   <th>Action</th>
+                  <th>Details</th>
                 </tr>
               </thead>
               <tbody id="adminRequestsTableBody"></tbody>
             </table>
           </div>
+          <div class="admin-pagination"><span id="requestsPageInfo">Page 1</span><button type="button" class="btn btn-secondary" id="requestsPrev">Previous</button><button type="button" class="btn btn-secondary" id="requestsNext">Next</button></div>
+        </section>
+
+        <section class="card admin-section">
+          <h3>Recent Administrative Activity</h3>
+          <ul id="adminActivityList" class="admin-activity-list"></ul>
         </section>
       </div>
     </main>

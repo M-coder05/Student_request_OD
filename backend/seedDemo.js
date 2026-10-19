@@ -75,7 +75,7 @@ const seedDemo = async () => {
         year: 'N/A',
         semester: 'N/A',
         password: adminPassword,
-        role: 'admin',
+        role: 'demo_admin',
         isDemo: true,
       },
     },

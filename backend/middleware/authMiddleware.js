@@ -17,6 +17,9 @@ const authMiddleware = async (req, res, next) => {
     if (!user) {
       return res.status(401).json({ message: 'Unauthorized: User not found' });
     }
+    if (user.isActive === false) {
+      return res.status(401).json({ message: 'This account is disabled' });
+    }
 
     req.user = user;
     next();
