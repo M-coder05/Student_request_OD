@@ -24,58 +24,123 @@ const seedAdmin = async () => {
     SUPER_ADMIN_EMAIL,
     SUPER_ADMIN_PASSWORD,
   } = process.env;
-  if (!SUPER_ADMIN_EMAIL || !SUPER_ADMIN_PASSWORD || SUPER_ADMIN_PASSWORD.length < 12) {
+  if (!SUPER_ADMIN_EMAIL?.trim() || !SUPER_ADMIN_PASSWORD || SUPER_ADMIN_PASSWORD.length < 12) {
     throw new Error('Set SUPER_ADMIN_EMAIL and a SUPER_ADMIN_PASSWORD of at least 12 characters before seeding');
   }
 
   const email = SUPER_ADMIN_EMAIL.trim().toLowerCase();
   const registerNumber = SUPER_ADMIN_REGISTER_NUMBER?.trim() || 'SUPER-ADMIN-01';
-  const matchingAccounts = await User.find({
-    $or: [{ email }, { registerNumber }],
-  });
-  const emailMatch = matchingAccounts.find((account) => account.email === email);
-  const registerNumberMatch = matchingAccounts.find((account) => account.registerNumber === registerNumber);
+  const findConfiguredAccounts = async () => {
+    const accounts = await User.find({
+      $or: [{ email }, { registerNumber }],
+    }).select('_id email registerNumber role isDemo');
 
-  if (emailMatch && registerNumberMatch && !emailMatch._id.equals(registerNumberMatch._id)) {
-    throw new Error('Super Admin email and register number are assigned to different accounts');
-  }
+    const emailMatches = accounts.filter((account) => account.email === email);
+    const registerNumberMatches = accounts.filter((account) => account.registerNumber === registerNumber);
+    const sameAccount = emailMatches.length === 1
+      && registerNumberMatches.length === 1
+      && emailMatches[0]._id.equals(registerNumberMatches[0]._id);
 
-  const adminExists = emailMatch || registerNumberMatch;
-  if (adminExists) {
-    if (
-      (adminExists.role !== 'admin' && adminExists.role !== 'super_admin')
-      || (adminExists.role === 'admin' && adminExists.isDemo)
-    ) {
-      throw new Error('Super Admin email or register number is already assigned to another account');
+    return { emailMatches, registerNumberMatches, sameAccount };
+  };
+
+  const throwConflict = ({ emailMatches, registerNumberMatches }, reason = '') => {
+    const conflicts = [];
+    if (emailMatches.length) conflicts.push('configured email');
+    if (registerNumberMatches.length) conflicts.push('configured register number');
+
+    if (emailMatches.length && registerNumberMatches.length
+      && !emailMatches.some((emailAccount) => registerNumberMatches.some(
+        (registerAccount) => emailAccount._id.equals(registerAccount._id)
+      ))) {
+      conflicts.length = 0;
+      conflicts.push('configured email and register number (they belong to different accounts)');
     }
 
-    adminExists.name = SUPER_ADMIN_NAME || 'Portal Owner';
-    adminExists.registerNumber = registerNumber;
-    adminExists.email = email;
-    adminExists.password = await bcrypt.hash(SUPER_ADMIN_PASSWORD, 12);
-    adminExists.role = 'super_admin';
-    adminExists.isDemo = false;
-    await adminExists.save();
-    await disableLegacyAdmin(adminExists._id);
-    console.log('Super Admin Ready');
+    throw new Error(
+      `Super Admin initialization blocked: ${conflicts.join(' and ')} conflict with an existing account`
+      + `${reason ? ` (${reason})` : ''}. Set both Super Admin identifiers to the verified account `
+      + 'or resolve the account ownership manually.'
+    );
+  };
+
+  const hashedPassword = await bcrypt.hash(SUPER_ADMIN_PASSWORD, 12);
+  const existing = await findConfiguredAccounts();
+
+  if (existing.emailMatches.length || existing.registerNumberMatches.length) {
+    if (!existing.sameAccount) {
+      throwConflict(existing);
+    }
+
+    const matchedAccount = existing.emailMatches[0];
+    if (
+      !['admin', 'super_admin'].includes(matchedAccount.role)
+      || matchedAccount.isDemo === true
+    ) {
+      const reason = matchedAccount.isDemo === true
+        ? 'the matched account is marked as demo'
+        : `the matched account role is ${matchedAccount.role}`;
+      throwConflict(existing, reason);
+    }
+
+    const superAdmin = await User.findById(matchedAccount._id);
+    superAdmin.name = SUPER_ADMIN_NAME || 'Portal Owner';
+    superAdmin.registerNumber = registerNumber;
+    superAdmin.email = email;
+    superAdmin.password = hashedPassword;
+    superAdmin.role = 'super_admin';
+    superAdmin.isDemo = false;
+    await superAdmin.save();
+    await disableLegacyAdmin(superAdmin._id);
+    console.log('Super Admin Ready: verified configured email and register number belong to the same non-demo admin account');
     return;
   }
 
-  const superAdmin = await User.create({
-    name: SUPER_ADMIN_NAME || 'Portal Owner',
-    registerNumber,
-    email,
-    phone: process.env.SUPER_ADMIN_PHONE || '0000000000',
-    department: 'Administration',
-    year: 'N/A',
-    semester: 'N/A',
-    password: await bcrypt.hash(SUPER_ADMIN_PASSWORD, 12),
-    role: 'super_admin',
-    isDemo: false,
-  });
-  await disableLegacyAdmin(superAdmin._id);
+  try {
+    const superAdmin = await User.create({
+      name: SUPER_ADMIN_NAME || 'Portal Owner',
+      registerNumber,
+      email,
+      phone: process.env.SUPER_ADMIN_PHONE || '0000000000',
+      department: 'Administration',
+      year: 'N/A',
+      semester: 'N/A',
+      password: hashedPassword,
+      role: 'super_admin',
+      isDemo: false,
+    });
+    await disableLegacyAdmin(superAdmin._id);
+    console.log('Super Admin Ready: new account created');
+  } catch (error) {
+    if (error.code !== 11000) {
+      throw error;
+    }
 
-  console.log('Super Admin Ready');
+    const concurrentAccount = await findConfiguredAccounts();
+    if (
+      concurrentAccount.sameAccount
+      && ['admin', 'super_admin'].includes(concurrentAccount.emailMatches[0].role)
+      && concurrentAccount.emailMatches[0].isDemo !== true
+    ) {
+      const superAdmin = await User.findById(concurrentAccount.emailMatches[0]._id);
+      superAdmin.name = SUPER_ADMIN_NAME || 'Portal Owner';
+      superAdmin.registerNumber = registerNumber;
+      superAdmin.email = email;
+      superAdmin.password = hashedPassword;
+      superAdmin.role = 'super_admin';
+      superAdmin.isDemo = false;
+      await superAdmin.save();
+      await disableLegacyAdmin(superAdmin._id);
+      console.log('Super Admin Ready: existing account reused after concurrent initialization');
+      return;
+    }
+
+    if (concurrentAccount.emailMatches.length || concurrentAccount.registerNumberMatches.length) {
+      throwConflict(concurrentAccount);
+    }
+
+    throw new Error('Super Admin initialization stopped after a uniqueness conflict; inspect the user indexes and configured identifiers');
+  }
 };
 
 if (require.main === module) {

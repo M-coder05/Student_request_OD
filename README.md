@@ -123,11 +123,19 @@ npm run seed:admin
 
 This creates or updates the database-backed `super_admin` account. The account and role persist across restarts and deployments that retain the same database. Re-running this command updates its password from the current environment value. Existing data is not deleted. The Super Admin cannot be disabled through the admin API. The seeder also disables the exact legacy `admin@portal.com` / `ADMIN001` bootstrap account if present; its record and related data are retained.
 
+### Super Admin initialization conflicts
+
+Startup only reuses an existing account when both configured identifiers resolve to that same account, and that account is a non-demo `admin` or `super_admin`. It updates that verified account's name, role, and password. It never promotes a student or demo account. A conflicting configured email or register number is reported by identifier type only; values and passwords are not logged. If both identifiers resolve to different accounts, startup stops and reports that both conflict.
+
+To resolve a conflict safely, inspect the `users` collection in the MongoDB database configured by `MONGO_URI`. Confirm which existing account, if any, is the intended portal owner. Set `SUPER_ADMIN_EMAIL` and `SUPER_ADMIN_REGISTER_NUMBER` to the identifiers already belonging to that same non-demo admin account. If an identifier belongs to someone else, do not reuse it: configure unused identifiers for a newly created Super Admin or resolve the ownership through a reviewed, manual database migration. Do not change a student's role to make startup pass.
+
 ## Start backend
 
 ```bash
 npm start
 ```
+
+After MongoDB connects, startup initializes the Super Admin and starts listening only if initialization succeeds. Verify `MongoDB Connected`, `Super Admin Ready`, and `Server Running` in the logs. For Render, set the Super Admin variables and `MONGO_URI` in the service environment, deploy, and check the logs for an identifier-specific conflict if startup remains blocked. To test login, submit the configured email and password to `POST /api/auth/login`; also verify a student login and the existing Demo Admin login to confirm those paths remain available.
 
 ## Development mode
 
