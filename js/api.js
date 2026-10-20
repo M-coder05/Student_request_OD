@@ -1,6 +1,9 @@
-const API_BASE_URL = window.location.protocol === 'file:'
-  ? 'http://localhost:5000/api'
-  : `${window.location.origin}/api`;
+const API_BASE_URL = window.API_BASE_URL
+  ? window.API_BASE_URL.replace(/\/$/, '')
+  : window.location.protocol === 'file:'
+    || (['localhost', '127.0.0.1'].includes(window.location.hostname) && window.location.port !== '5000')
+    ? 'http://localhost:5000/api'
+    : `${window.location.origin}/api`;
 
 function getAuthToken() {
   return localStorage.getItem('token');

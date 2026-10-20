@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');
 const path = require('path');
+const mongoose = require('mongoose');
 const connectDB = require('./config/db');
 const authRoutes = require('./routes/authRoutes');
 const studentRoutes = require('./routes/studentRoutes');
@@ -13,9 +14,41 @@ const complaintRoutes = require('./routes/complaintRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const requestsRoutes = require('./routes/requestsRoutes');
 const errorMiddleware = require('./middleware/errorMiddleware');
+const seedAdmin = require('./seedAdmin');
+const User = require('./models/User');
+const {
+  getDemoAccounts,
+  hasDemoCredentials,
+  isDemoModeEnabled,
+} = require('./config/demo');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+const logDemoReadiness = async () => {
+  if (!isDemoModeEnabled()) {
+    console.log('Demo Accounts Not Ready: demo mode is disabled');
+    return;
+  }
+
+  if (!hasDemoCredentials()) {
+    console.log('Demo Accounts Not Ready: demo credentials are not configured');
+    return;
+  }
+
+  const accounts = getDemoAccounts();
+  const [student, admin] = await Promise.all([
+    User.exists({ email: accounts.student.email, role: 'student', isDemo: true, isActive: { $ne: false } }),
+    User.exists({ email: accounts.admin.email, role: 'demo_admin', isDemo: true, isActive: { $ne: false } }),
+  ]);
+
+  if (student && admin) {
+    console.log('Demo Accounts Ready');
+    return;
+  }
+
+  console.log('Demo Accounts Not Ready: run npm run seed:demo');
+};
 
 app.use(cors());
 app.use(express.json());
@@ -54,8 +87,18 @@ app.get('*', (req, res) => {
 
 app.use(errorMiddleware);
 
-connectDB().then(() => {
+const startServer = async () => {
+  await connectDB();
+  await seedAdmin();
+  await logDemoReadiness();
+
   app.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
+    console.log(`Server Running on port ${PORT}`);
   });
+};
+
+startServer().catch(async (error) => {
+  console.error('Server startup failed:', error.message);
+  await mongoose.disconnect();
+  process.exitCode = 1;
 });

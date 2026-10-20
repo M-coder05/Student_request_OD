@@ -115,7 +115,7 @@ Start MongoDB locally or use MongoDB Atlas.
 
 ## Create the Permanent Super Admin
 
-Set `SUPER_ADMIN_EMAIL` and `SUPER_ADMIN_PASSWORD` in `.env` before running the seed. The password must be at least 12 characters and is hashed with bcrypt before storage in MongoDB.
+Set `SUPER_ADMIN_EMAIL` and `SUPER_ADMIN_PASSWORD` in `.env` before starting the server. The password must be at least 12 characters and is hashed with bcrypt before storage in MongoDB. On every server startup, the configured permanent Super Admin is created or updated automatically after MongoDB connects. `npm run seed:admin` remains available for manually applying the same account settings.
 
 ```bash
 npm run seed:admin

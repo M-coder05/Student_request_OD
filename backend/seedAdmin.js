@@ -18,33 +18,48 @@ const disableLegacyAdmin = async (superAdminId) => {
 };
 
 const seedAdmin = async () => {
-  const { SUPER_ADMIN_NAME, SUPER_ADMIN_REGISTER_NUMBER, SUPER_ADMIN_EMAIL, SUPER_ADMIN_PASSWORD } = process.env;
+  const {
+    SUPER_ADMIN_NAME,
+    SUPER_ADMIN_REGISTER_NUMBER,
+    SUPER_ADMIN_EMAIL,
+    SUPER_ADMIN_PASSWORD,
+  } = process.env;
   if (!SUPER_ADMIN_EMAIL || !SUPER_ADMIN_PASSWORD || SUPER_ADMIN_PASSWORD.length < 12) {
     throw new Error('Set SUPER_ADMIN_EMAIL and a SUPER_ADMIN_PASSWORD of at least 12 characters before seeding');
   }
 
-  await connectDB();
-
   const email = SUPER_ADMIN_EMAIL.trim().toLowerCase();
-  const registerNumber = SUPER_ADMIN_REGISTER_NUMBER || 'SUPER-ADMIN-01';
-  const adminExists = await User.findOne({ $or: [{ email }, { registerNumber }] });
+  const registerNumber = SUPER_ADMIN_REGISTER_NUMBER?.trim() || 'SUPER-ADMIN-01';
+  const matchingAccounts = await User.find({
+    $or: [{ email }, { registerNumber }],
+  });
+  const emailMatch = matchingAccounts.find((account) => account.email === email);
+  const registerNumberMatch = matchingAccounts.find((account) => account.registerNumber === registerNumber);
 
+  if (emailMatch && registerNumberMatch && !emailMatch._id.equals(registerNumberMatch._id)) {
+    throw new Error('Super Admin email and register number are assigned to different accounts');
+  }
+
+  const adminExists = emailMatch || registerNumberMatch;
   if (adminExists) {
-    if (adminExists.email !== email || (adminExists.role !== 'admin' && adminExists.role !== 'super_admin') || adminExists.isDemo) {
+    if (
+      (adminExists.role !== 'admin' && adminExists.role !== 'super_admin')
+      || (adminExists.role === 'admin' && adminExists.isDemo)
+    ) {
       throw new Error('Super Admin email or register number is already assigned to another account');
     }
+
     adminExists.name = SUPER_ADMIN_NAME || 'Portal Owner';
     adminExists.registerNumber = registerNumber;
+    adminExists.email = email;
     adminExists.password = await bcrypt.hash(SUPER_ADMIN_PASSWORD, 12);
     adminExists.role = 'super_admin';
     adminExists.isDemo = false;
     await adminExists.save();
     await disableLegacyAdmin(adminExists._id);
-    console.log('Super Admin account updated');
+    console.log('Super Admin Ready');
     return;
   }
-
-  const hashedPassword = await bcrypt.hash(SUPER_ADMIN_PASSWORD, 12);
 
   const superAdmin = await User.create({
     name: SUPER_ADMIN_NAME || 'Portal Owner',
@@ -54,18 +69,24 @@ const seedAdmin = async () => {
     department: 'Administration',
     year: 'N/A',
     semester: 'N/A',
-    password: hashedPassword,
+    password: await bcrypt.hash(SUPER_ADMIN_PASSWORD, 12),
     role: 'super_admin',
+    isDemo: false,
   });
   await disableLegacyAdmin(superAdmin._id);
 
-  console.log('Super Admin account created successfully');
+  console.log('Super Admin Ready');
 };
 
-seedAdmin()
-  .then(() => mongoose.disconnect())
-  .catch(async (err) => {
-  console.error(err);
-  await mongoose.disconnect();
-  process.exitCode = 1;
-});
+if (require.main === module) {
+  connectDB()
+    .then(seedAdmin)
+    .then(() => mongoose.disconnect())
+    .catch(async (error) => {
+      console.error('Super Admin seeding failed:', error.message);
+      await mongoose.disconnect();
+      process.exitCode = 1;
+    });
+}
+
+module.exports = seedAdmin;

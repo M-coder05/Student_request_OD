@@ -87,32 +87,42 @@ const registerUser = async (req, res) => {
 
 const loginUser = async (req, res) => {
   const { registerNumber, email, password } = req.body;
+  const normalizedEmail = typeof email === 'string' ? email.trim().toLowerCase() : '';
+  const normalizedRegisterNumber = typeof registerNumber === 'string' ? registerNumber.trim() : '';
+  const loginPassword = typeof password === 'string' ? password : '';
 
-  if ((!registerNumber && !email) || !password) {
+  if ((!normalizedRegisterNumber && !normalizedEmail) || !loginPassword) {
     return res.status(400).json({ message: 'Register number or email and password are required' });
   }
 
-  // Build query based on what was provided
-  let query = {};
-  if (email) {
-    query.email = email;
-  } else if (registerNumber) {
-    query.registerNumber = registerNumber;
-  }
+  const usesEmail = Boolean(normalizedEmail);
+  const identifier = usesEmail ? normalizedEmail : normalizedRegisterNumber;
+  const query = usesEmail
+    ? { email: normalizedEmail }
+    : { registerNumber: normalizedRegisterNumber };
+
+  console.info('[auth] Login attempt', {
+    method: usesEmail ? 'email' : 'registerNumber',
+    identifier,
+  });
 
   const user = await User.findOne(query);
 
   if (!user) {
-    return res.status(401).json({ message: 'Invalid credentials' });
+    console.warn('[auth] Login failed: user not found', { identifier });
+    return res.status(401).json({ message: 'User not found' });
   }
 
-  const isMatch = await bcrypt.compare(password, user.password);
+  const isMatch = await bcrypt.compare(loginPassword, user.password);
 
   if (!isMatch) {
-    return res.status(401).json({ message: 'Invalid credentials' });
+    console.warn('[auth] Login failed: wrong password', { userId: user._id, identifier });
+    return res.status(401).json({ message: 'Wrong password' });
   }
+
   if (user.isActive === false) {
-    return res.status(401).json({ message: 'Invalid credentials' });
+    console.warn('[auth] Login failed: inactive account', { userId: user._id, identifier });
+    return res.status(401).json({ message: 'Inactive account' });
   }
 
   const token = generateToken(user);
