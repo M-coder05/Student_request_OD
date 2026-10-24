@@ -30,6 +30,19 @@ const seedAdmin = async () => {
 
   const email = SUPER_ADMIN_EMAIL.trim().toLowerCase();
   const registerNumber = SUPER_ADMIN_REGISTER_NUMBER?.trim() || 'SUPER-ADMIN-01';
+  const superAdminFields = {
+    name: SUPER_ADMIN_NAME || 'Portal Owner',
+    registerNumber,
+    email,
+    password: await bcrypt.hash(SUPER_ADMIN_PASSWORD, 12),
+    role: 'super_admin',
+    isDemo: false,
+  };
+  const updateSuperAdmin = (filter) => User.findOneAndUpdate(
+    filter,
+    { $set: superAdminFields },
+    { new: true, runValidators: true }
+  );
   const findConfiguredAccounts = async () => {
     const accounts = await User.find({
       $or: [{ email }, { registerNumber }],
@@ -64,7 +77,6 @@ const seedAdmin = async () => {
     );
   };
 
-  const hashedPassword = await bcrypt.hash(SUPER_ADMIN_PASSWORD, 12);
   const existing = await findConfiguredAccounts();
 
   if (existing.emailMatches.length || existing.registerNumberMatches.length) {
@@ -83,34 +95,28 @@ const seedAdmin = async () => {
       throwConflict(existing, reason);
     }
 
-    const superAdmin = await User.findById(matchedAccount._id);
-    superAdmin.name = SUPER_ADMIN_NAME || 'Portal Owner';
-    superAdmin.registerNumber = registerNumber;
-    superAdmin.email = email;
-    superAdmin.password = hashedPassword;
-    superAdmin.role = 'super_admin';
-    superAdmin.isDemo = false;
-    await superAdmin.save();
+    const superAdmin = await updateSuperAdmin({ _id: matchedAccount._id });
     await disableLegacyAdmin(superAdmin._id);
     console.log('Super Admin Ready: verified configured email and register number belong to the same non-demo admin account');
     return;
   }
 
   try {
-    const superAdmin = await User.create({
-      name: SUPER_ADMIN_NAME || 'Portal Owner',
-      registerNumber,
-      email,
-      phone: process.env.SUPER_ADMIN_PHONE || '0000000000',
-      department: 'Administration',
-      year: 'N/A',
-      semester: 'N/A',
-      password: hashedPassword,
-      role: 'super_admin',
-      isDemo: false,
-    });
+    const superAdmin = await User.findOneAndUpdate(
+      { email },
+      {
+        $set: {
+          ...superAdminFields,
+          phone: process.env.SUPER_ADMIN_PHONE || '0000000000',
+          department: 'Administration',
+          year: 'N/A',
+          semester: 'N/A',
+        },
+      },
+      { upsert: true, new: true, runValidators: true, setDefaultsOnInsert: true }
+    );
     await disableLegacyAdmin(superAdmin._id);
-    console.log('Super Admin Ready: new account created');
+    console.log('Super Admin Ready: account upserted');
   } catch (error) {
     if (error.code !== 11000) {
       throw error;
@@ -122,14 +128,7 @@ const seedAdmin = async () => {
       && ['admin', 'super_admin'].includes(concurrentAccount.emailMatches[0].role)
       && concurrentAccount.emailMatches[0].isDemo !== true
     ) {
-      const superAdmin = await User.findById(concurrentAccount.emailMatches[0]._id);
-      superAdmin.name = SUPER_ADMIN_NAME || 'Portal Owner';
-      superAdmin.registerNumber = registerNumber;
-      superAdmin.email = email;
-      superAdmin.password = hashedPassword;
-      superAdmin.role = 'super_admin';
-      superAdmin.isDemo = false;
-      await superAdmin.save();
+      const superAdmin = await updateSuperAdmin({ _id: concurrentAccount.emailMatches[0]._id });
       await disableLegacyAdmin(superAdmin._id);
       console.log('Super Admin Ready: existing account reused after concurrent initialization');
       return;

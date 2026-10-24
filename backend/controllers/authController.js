@@ -101,27 +101,22 @@ const loginUser = async (req, res) => {
     ? { email: normalizedEmail }
     : { registerNumber: normalizedRegisterNumber };
 
-  console.info('[auth] Login attempt', {
-    method: usesEmail ? 'email' : 'registerNumber',
-    identifier,
-  });
-
   const user = await User.findOne(query);
+  console.info('[auth] Login lookup', { userFound: Boolean(user) });
 
   if (!user) {
-    console.warn('[auth] Login failed: user not found', { identifier });
     return res.status(401).json({ message: 'User not found' });
   }
 
   const isMatch = await bcrypt.compare(loginPassword, user.password);
+  console.info('[auth] Password comparison', { bcryptComparePassed: isMatch });
 
   if (!isMatch) {
-    console.warn('[auth] Login failed: wrong password', { userId: user._id, identifier });
     return res.status(401).json({ message: 'Wrong password' });
   }
 
   if (user.isActive === false) {
-    console.warn('[auth] Login failed: inactive account', { userId: user._id, identifier });
+    console.warn('[auth] Login failed: inactive account');
     return res.status(401).json({ message: 'Inactive account' });
   }
 
