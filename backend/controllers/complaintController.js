@@ -1,4 +1,5 @@
 const Complaint = require('../models/Complaint');
+const notifyUser = require('../utils/notifyUser');
 
 const generateRequestId = (type) => {
   const random = Math.random().toString(36).slice(2, 8).toUpperCase();
@@ -23,6 +24,16 @@ const createComplaint = async (req, res) => {
     status: 'Pending',
     adminRemark: '',
     requestId: generateRequestId('COMP'),
+  });
+
+  await notifyUser({
+    user: req.user,
+    request: complaint,
+    type: 'Complaint',
+    title: 'Request received',
+    message: `We received your complaint ${complaint.requestId}.`,
+    oldStatus: 'Submitted',
+    newStatus: complaint.status,
   });
 
   res.status(201).json({ message: 'Complaint submitted successfully', complaint });

@@ -1,5 +1,6 @@
 const ODRequest = require('../models/ODRequest');
 const parseDate = require('../utils/parseDate');
+const notifyUser = require('../utils/notifyUser');
 
 const generateRequestId = (type) => {
   const random = Math.random().toString(36).slice(2, 8).toUpperCase();
@@ -30,6 +31,16 @@ const createODRequest = async (req, res) => {
     status: 'Pending',
     adminRemark: '',
     requestId: generateRequestId('OD'),
+  });
+
+  await notifyUser({
+    user: req.user,
+    request,
+    type: 'OD',
+    title: 'Request received',
+    message: `We received your OD request ${request.requestId}.`,
+    oldStatus: 'Submitted',
+    newStatus: request.status,
   });
 
   res.status(201).json({ message: 'OD request submitted successfully', request });

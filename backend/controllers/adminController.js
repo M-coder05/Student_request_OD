@@ -7,6 +7,8 @@ const Complaint = require('../models/Complaint');
 const AuditLog = require('../models/AuditLog');
 const { DEMO_STUDENT_EMAIL } = require('../config/demo');
 const getRequestStatusCounts = require('../utils/requestStats');
+const notifyUser = require('../utils/notifyUser');
+const crypto = require('crypto');
 
 const isDemoAdmin = (user) => user.role === 'demo_admin' && user.isDemo === true;
 
@@ -254,6 +256,22 @@ const updateRequestStatus = async (req, res) => {
       const previousStatus = request.status;
       request.status = status;
       request.adminRemark = typeof adminRemark === 'string' ? adminRemark.trim().slice(0, 1000) : request.adminRemark;
+      if (item.type === 'Bonafide' && previousStatus !== status) {
+        const requestOwner = await User.findById(request.studentId).select('isDemo');
+        if (status === 'Approved' && requestOwner?.isDemo !== true) {
+          request.verificationCode = crypto.randomBytes(32).toString('base64url');
+          request.certificateNumber = `BONA-${new Date().getFullYear()}-${crypto.randomBytes(5).toString('hex').toUpperCase()}`;
+          request.issuedAt = new Date();
+          request.revoked = false;
+        } else if (status === 'Approved') {
+          request.verificationCode = undefined;
+          request.certificateNumber = '';
+          request.issuedAt = undefined;
+          request.revoked = false;
+        } else if (previousStatus === 'Approved') {
+          request.revoked = true;
+        }
+      }
       if (previousStatus !== status) {
         request.statusHistory.push({
           fromStatus: previousStatus,
@@ -265,6 +283,22 @@ const updateRequestStatus = async (req, res) => {
       }
       await request.save();
       if (previousStatus !== status) {
+        try {
+          const student = await User.findById(request.studentId).select('email isDemo');
+          if (student) {
+            await notifyUser({
+              user: student,
+              request,
+              type: item.type,
+              title: 'Request status updated',
+              message: `Your ${item.type.toLowerCase()} request ${request.requestId} changed from ${previousStatus} to ${status}.${request.adminRemark ? ` Admin remark: ${request.adminRemark}` : ''}`,
+              oldStatus: previousStatus,
+              newStatus: status,
+            });
+          }
+        } catch (error) {
+          console.error('[notifications] Failed to notify request owner:', error.message);
+        }
         await recordAdminAction(req, 'request_status_changed', item.type, request._id, `${previousStatus} -> ${status}${request.adminRemark ? `: ${request.adminRemark}` : ''}`);
       }
       return res.status(200).json({ message: 'Request status updated successfully', request });

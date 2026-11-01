@@ -15,6 +15,8 @@ const bonafideRoutes = require('./routes/bonafideRoutes');
 const complaintRoutes = require('./routes/complaintRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const requestsRoutes = require('./routes/requestsRoutes');
+const notificationRoutes = require('./routes/notificationRoutes');
+const verificationRoutes = require('./routes/verificationRoutes');
 const errorMiddleware = require('./middleware/errorMiddleware');
 const seedAdmin = require('./seedAdmin');
 const User = require('./models/User');
@@ -25,6 +27,7 @@ const {
 } = require('./config/demo');
 
 const app = express();
+app.set('trust proxy', 1);
 const PORT = process.env.PORT || 5000;
 
 const logDemoReadiness = async () => {
@@ -56,8 +59,11 @@ app.use(helmet({
   contentSecurityPolicy: {
     directives: {
       ...helmet.contentSecurityPolicy.getDefaultDirectives(),
-      'style-src': ["'self'", 'https://fonts.googleapis.com', 'https://cdnjs.cloudflare.com'],
-      'font-src': ["'self'", 'https://fonts.gstatic.com', 'https://cdnjs.cloudflare.com', 'data:'],
+      'script-src': ["'self'"],
+      'style-src': ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com', 'https://cdnjs.cloudflare.com', 'https://unpkg.com'],
+      'font-src': ["'self'", 'https://fonts.gstatic.com', 'https://cdnjs.cloudflare.com', 'https://unpkg.com', 'data:'],
+      'img-src': ["'self'", 'data:'],
+      'connect-src': ["'self'"],
     },
   },
 }));
@@ -73,32 +79,29 @@ app.use('/api/od', odRoutes);
 app.use('/api/bonafide', bonafideRoutes);
 app.use('/api/complaints', complaintRoutes);
 app.use('/api/requests', requestsRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/verify', verificationRoutes);
 app.use('/api/admin', adminRoutes);
 
 app.get('/api/health', (req, res) => {
   res.status(200).json({ status: 'OK', message: 'Smart Student Service Portal API is running' });
 });
 
-app.use(express.static(path.join(__dirname, '../frontend')));
-app.use('/css', express.static(path.join(__dirname, '../css')));
-app.use('/js', express.static(path.join(__dirname, '../js')));
-app.use('/images', express.static(path.join(__dirname, '../images')));
+const clientDistPath = path.join(__dirname, '../client/dist');
+app.use(express.static(clientDistPath));
 
 app.get('*', (req, res) => {
-  if (req.path.startsWith('/api/')) {
+  if (req.path.startsWith('/api/') || req.path === '/api') {
     return res.status(404).json({ message: 'API route not found' });
   }
 
-  if (req.path.includes('.') || req.path.startsWith('/css') || req.path.startsWith('/js') || req.path.startsWith('/images')) {
-    return res.status(404).send('Not found');
-  }
-
-  res.sendFile(path.join(__dirname, '../frontend/index.html'));
+  res.sendFile(path.join(clientDistPath, 'index.html'));
 });
 
 app.use(errorMiddleware);
 
 const startServer = async () => {
+  require('./utils/bonafidePdf').warnMissingCertificateSignatory();
   await connectDB();
   await seedAdmin();
   await logDemoReadiness();

@@ -1,5 +1,6 @@
 const LeaveRequest = require('../models/LeaveRequest');
 const parseDate = require('../utils/parseDate');
+const notifyUser = require('../utils/notifyUser');
 
 const generateRequestId = (type) => {
   const random = Math.random().toString(36).slice(2, 8).toUpperCase();
@@ -34,6 +35,16 @@ const createLeaveRequest = async (req, res) => {
     status: 'Pending',
     adminRemark: '',
     requestId: generateRequestId('LEAVE'),
+  });
+
+  await notifyUser({
+    user: req.user,
+    request,
+    type: 'Leave',
+    title: 'Request received',
+    message: `We received your leave request ${request.requestId}.`,
+    oldStatus: 'Submitted',
+    newStatus: request.status,
   });
 
   res.status(201).json({ message: 'Leave request submitted successfully', request });

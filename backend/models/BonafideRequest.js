@@ -17,6 +17,10 @@ const bonafideRequestSchema = new mongoose.Schema(
     },
     adminRemark: { type: String, default: '' },
     requestId: { type: String, unique: true, required: true },
+    verificationCode: { type: String, unique: true, sparse: true, select: false },
+    certificateNumber: { type: String, default: '' },
+    issuedAt: { type: Date },
+    revoked: { type: Boolean, default: false },
     statusHistory: [{
       fromStatus: { type: String },
       toStatus: { type: String, required: true },

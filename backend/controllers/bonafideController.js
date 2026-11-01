@@ -1,4 +1,9 @@
+const crypto = require('crypto');
+const mongoose = require('mongoose');
 const BonafideRequest = require('../models/BonafideRequest');
+const notifyUser = require('../utils/notifyUser');
+const generateBonafidePdf = require('../utils/bonafidePdf');
+const { isDemoUser } = require('../config/demo');
 
 const generateRequestId = (type) => {
   const random = Math.random().toString(36).slice(2, 8).toUpperCase();
@@ -26,6 +31,16 @@ const createBonafideRequest = async (req, res) => {
     requestId: generateRequestId('BONA'),
   });
 
+  await notifyUser({
+    user: req.user,
+    request,
+    type: 'Bonafide',
+    title: 'Request received',
+    message: `We received your Bonafide request ${request.requestId}.`,
+    oldStatus: 'Submitted',
+    newStatus: request.status,
+  });
+
   res.status(201).json({ message: 'Bonafide request submitted successfully', request });
 };
 
@@ -44,4 +59,71 @@ const getBonafideRequestById = async (req, res) => {
   res.status(200).json({ request });
 };
 
-module.exports = { createBonafideRequest, getMyBonafideRequests, getBonafideRequestById };
+const downloadBonafideCertificate = async (req, res) => {
+  if (!mongoose.isValidObjectId(req.params.id)) {
+    return res.status(400).json({ message: 'A valid Bonafide request ID is required' });
+  }
+
+  const request = await BonafideRequest.findOne({
+    _id: req.params.id,
+    studentId: req.user._id,
+  }).select('+verificationCode');
+
+  if (!request) {
+    return res.status(404).json({ message: 'Bonafide request not found' });
+  }
+
+  const demo = isDemoUser(req.user);
+  if (!demo && (request.status !== 'Approved' || request.revoked)) {
+    return res.status(403).json({ message: 'Certificate is available only for approved requests' });
+  }
+
+  if (!demo && !request.verificationCode) {
+    request.verificationCode = crypto.randomBytes(32).toString('base64url');
+    request.certificateNumber = `BONA-${new Date().getFullYear()}-${crypto.randomBytes(5).toString('hex').toUpperCase()}`;
+    request.issuedAt = new Date();
+    request.revoked = false;
+    await request.save();
+  }
+
+  const pdf = await generateBonafidePdf(request, { demo });
+  const safeRequestId = String(request.requestId).replace(/[^a-zA-Z0-9_-]/g, '-');
+  res.set({
+    'Content-Type': 'application/pdf',
+    'Content-Disposition': `attachment; filename="${safeRequestId}-certificate.pdf"`,
+    'Content-Length': pdf.length,
+    'Cache-Control': 'no-store',
+  });
+  return res.status(200).send(pdf);
+};
+
+const verifyBonafideCertificate = async (req, res) => {
+  const { code } = req.params;
+  if (!/^[A-Za-z0-9_-]{40,50}$/.test(code)) {
+    return res.status(200).json({ valid: false, revoked: false });
+  }
+
+  const request = await BonafideRequest.findOne({ verificationCode: code });
+  if (!request || !request.certificateNumber) {
+    return res.status(200).json({ valid: false, revoked: false });
+  }
+
+  const revoked = request.revoked === true || request.status !== 'Approved';
+  return res.status(200).json({
+    valid: !revoked,
+    revoked,
+    certificateNumber: request.certificateNumber,
+    studentName: request.studentName,
+    department: request.department,
+    purpose: request.purpose,
+    issueDate: request.issuedAt,
+  });
+};
+
+module.exports = {
+  createBonafideRequest,
+  getMyBonafideRequests,
+  getBonafideRequestById,
+  downloadBonafideCertificate,
+  verifyBonafideCertificate,
+};

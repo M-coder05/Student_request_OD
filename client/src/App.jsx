@@ -1,0 +1,62 @@
+import React from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
+import { ToastProvider } from './context/ToastContext';
+
+// Components
+import ProtectedRoute from './components/ProtectedRoute';
+import AdminRoute from './components/AdminRoute';
+
+// Pages
+import Home from './pages/Home';
+import Login from './pages/Login';
+import Register from './pages/Register';
+import AdminLogin from './pages/AdminLogin';
+import Dashboard from './pages/Dashboard';
+import Leave from './pages/Leave';
+import OD from './pages/OD';
+import Bonafide from './pages/Bonafide';
+import Complaint from './pages/Complaint';
+import Status from './pages/Status';
+import Profile from './pages/Profile';
+import Admin from './pages/Admin';
+import NotFound from './pages/NotFound';
+import VerifyCertificate from './pages/VerifyCertificate';
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <ToastProvider>
+        <BrowserRouter>
+          <Routes>
+            {/* Public Routes */}
+            <Route path="/" element={<Home />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/admin-login" element={<AdminLogin />} />
+            <Route path="/verify/:code" element={<VerifyCertificate />} />
+
+            {/* Protected Student Routes */}
+            <Route element={<ProtectedRoute />}>
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/leave" element={<Leave />} />
+              <Route path="/od" element={<OD />} />
+              <Route path="/bonafide" element={<Bonafide />} />
+              <Route path="/complaint" element={<Complaint />} />
+              <Route path="/status" element={<Status />} />
+              <Route path="/profile" element={<Profile />} />
+            </Route>
+
+            {/* Protected Admin Routes */}
+            <Route element={<AdminRoute />}>
+              <Route path="/admin" element={<Admin />} />
+            </Route>
+
+            {/* 404 Catch-All */}
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </ToastProvider>
+    </AuthProvider>
+  );
+}
