@@ -1,6 +1,8 @@
+require('express-async-errors');
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
 const morgan = require('morgan');
 const path = require('path');
 const mongoose = require('mongoose');
@@ -50,7 +52,16 @@ const logDemoReadiness = async () => {
   console.log('Demo Accounts Not Ready: run npm run seed:demo');
 };
 
-app.use(cors());
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+      'style-src': ["'self'", 'https://fonts.googleapis.com', 'https://cdnjs.cloudflare.com'],
+      'font-src': ["'self'", 'https://fonts.gstatic.com', 'https://cdnjs.cloudflare.com', 'data:'],
+    },
+  },
+}));
+app.use(cors({ origin: process.env.CORS_ORIGIN || false }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(morgan('dev'));

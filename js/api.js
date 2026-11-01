@@ -5,6 +5,16 @@ const API_BASE_URL = window.API_BASE_URL
     ? 'http://localhost:5000/api'
     : `${window.location.origin}/api`;
 
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, (character) => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;',
+  }[character]));
+}
+
 function getAuthToken() {
   return localStorage.getItem('token');
 }

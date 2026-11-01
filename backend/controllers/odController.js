@@ -1,4 +1,5 @@
 const ODRequest = require('../models/ODRequest');
+const parseDate = require('../utils/parseDate');
 
 const generateRequestId = (type) => {
   const random = Math.random().toString(36).slice(2, 8).toUpperCase();
@@ -6,10 +7,14 @@ const generateRequestId = (type) => {
 };
 
 const createODRequest = async (req, res) => {
-  const { eventName, eventDate, eventLocation, organizer, reason } = req.body;
+  const { eventName, eventDate, eventLocation, organizer, reason } = req.body || {};
 
   if (!eventName || !eventDate || !eventLocation || !organizer || !reason) {
     return res.status(400).json({ message: 'Please provide all OD request fields' });
+  }
+
+  if (!parseDate(eventDate)) {
+    return res.status(400).json({ message: 'Please provide a valid event date' });
   }
 
   const request = await ODRequest.create({

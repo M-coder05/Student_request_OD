@@ -6,6 +6,7 @@ const BonafideRequest = require('../models/BonafideRequest');
 const Complaint = require('../models/Complaint');
 const AuditLog = require('../models/AuditLog');
 const { DEMO_STUDENT_EMAIL } = require('../config/demo');
+const getRequestStatusCounts = require('../utils/requestStats');
 
 const isDemoAdmin = (user) => user.role === 'demo_admin' && user.isDemo === true;
 
@@ -54,43 +55,17 @@ const getAdminDashboard = async (req, res) => {
   const studentFilter = isDemoAdmin(req.user)
     ? (demoStudent ? { _id: demoStudent._id, role: 'student' } : { _id: { $exists: false } })
     : { role: 'student' };
-  const [totalStudents, totalUsers, totalLeave, totalOD, totalBonafide, totalComplaints] = await Promise.all([
+  const [totalStudents, totalUsers, requestCounts, resolvedComplaints] = await Promise.all([
     User.countDocuments(studentFilter),
     User.countDocuments(isDemoAdmin(req.user) ? { isDemo: true } : {}),
-    LeaveRequest.countDocuments(requestFilter),
-    ODRequest.countDocuments(requestFilter),
-    BonafideRequest.countDocuments(requestFilter),
-    Complaint.countDocuments(requestFilter),
+    getRequestStatusCounts([LeaveRequest, ODRequest, BonafideRequest, Complaint], requestFilter),
+    Complaint.countDocuments({ ...requestFilter, status: 'Resolved' }),
   ]);
-
-  const totalRequests = totalLeave + totalOD + totalBonafide + totalComplaints;
-
-  const pendingRequests =
-    (await LeaveRequest.countDocuments({ ...requestFilter, status: 'Pending' })) +
-    (await ODRequest.countDocuments({ ...requestFilter, status: 'Pending' })) +
-    (await BonafideRequest.countDocuments({ ...requestFilter, status: 'Pending' })) +
-    (await Complaint.countDocuments({ ...requestFilter, status: 'Pending' }));
-
-  const approvedRequests =
-    (await LeaveRequest.countDocuments({ ...requestFilter, status: 'Approved' })) +
-    (await ODRequest.countDocuments({ ...requestFilter, status: 'Approved' })) +
-    (await BonafideRequest.countDocuments({ ...requestFilter, status: 'Approved' }));
-
-  const rejectedRequests =
-    (await LeaveRequest.countDocuments({ ...requestFilter, status: 'Rejected' })) +
-    (await ODRequest.countDocuments({ ...requestFilter, status: 'Rejected' })) +
-    (await BonafideRequest.countDocuments({ ...requestFilter, status: 'Rejected' })) +
-    (await Complaint.countDocuments({ ...requestFilter, status: 'Rejected' }));
-
-  const resolvedComplaints = await Complaint.countDocuments({ ...requestFilter, status: 'Resolved' });
 
   res.status(200).json({
     totalStudents,
     totalUsers,
-    totalRequests,
-    pendingRequests,
-    approvedRequests,
-    rejectedRequests,
+    ...requestCounts,
     resolvedComplaints,
   });
 };

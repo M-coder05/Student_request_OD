@@ -27,11 +27,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       }[status] || 'status-pending';
 
       tr.innerHTML = `
-        <td>${item.requestId || item._id}</td>
-        <td>${type}</td>
+        <td>${escapeHtml(item.requestId || item._id)}</td>
+        <td>${escapeHtml(type)}</td>
         <td>${new Date(item.createdAt).toLocaleDateString()}</td>
-        <td><span class="status-badge ${statusClass}">${status}</span></td>
-        <td>${item.adminRemark || 'No remarks yet'}</td>
+        <td><span class="status-badge ${statusClass}">${escapeHtml(status)}</span></td>
+        <td>${escapeHtml(item.adminRemark || 'No remarks yet')}</td>
       `;
       tbody.appendChild(tr);
     });

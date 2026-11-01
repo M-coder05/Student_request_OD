@@ -1,4 +1,5 @@
 const LeaveRequest = require('../models/LeaveRequest');
+const parseDate = require('../utils/parseDate');
 
 const generateRequestId = (type) => {
   const random = Math.random().toString(36).slice(2, 8).toUpperCase();
@@ -6,10 +7,20 @@ const generateRequestId = (type) => {
 };
 
 const createLeaveRequest = async (req, res) => {
-  const { fromDate, toDate, reason } = req.body;
+  const { fromDate, toDate, reason } = req.body || {};
 
   if (!fromDate || !toDate || !reason) {
     return res.status(400).json({ message: 'Please provide from date, to date and reason' });
+  }
+
+  const parsedFromDate = parseDate(fromDate);
+  const parsedToDate = parseDate(toDate);
+  if (!parsedFromDate || !parsedToDate) {
+    return res.status(400).json({ message: 'Please provide valid leave dates' });
+  }
+
+  if (parsedToDate < parsedFromDate) {
+    return res.status(400).json({ message: 'To date cannot be before from date' });
   }
 
   const request = await LeaveRequest.create({

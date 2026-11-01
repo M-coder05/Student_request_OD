@@ -12,7 +12,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     document.getElementById('totalRequests').textContent = result.totalRequests || 0;
     document.getElementById('pendingRequests').textContent = result.pendingRequests || 0;
+    document.getElementById('inProgressRequests').textContent = result.inProgressRequests || 0;
     document.getElementById('approvedRequests').textContent = result.approvedRequests || 0;
+    document.getElementById('resolvedRequests').textContent = result.resolvedRequests || 0;
     document.getElementById('rejectedRequests').textContent = result.rejectedRequests || 0;
   } catch (error) {
     showToast(error.message, 'error');

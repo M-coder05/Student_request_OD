@@ -7,6 +7,8 @@ const {
   isDemoModeEnabled,
 } = require('../config/demo');
 
+const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
 const generateToken = (user) => {
   return jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRES_IN || '7d',
@@ -26,7 +28,7 @@ const serializeUser = (user) => ({
 });
 
 const registerUser = async (req, res) => {
-  const {
+  let {
     name,
     registerNumber,
     email,
@@ -36,10 +38,26 @@ const registerUser = async (req, res) => {
     semester,
     password,
     confirmPassword,
-  } = req.body;
+  } = req.body || {};
+
+  name = typeof name === 'string' ? name.trim() : '';
+  registerNumber = typeof registerNumber === 'string' ? registerNumber.trim() : '';
+  email = typeof email === 'string' ? email.trim().toLowerCase() : '';
+  phone = typeof phone === 'string' ? phone.trim() : '';
+  department = typeof department === 'string' ? department.trim() : '';
+  year = typeof year === 'string' ? year.trim() : '';
+  semester = typeof semester === 'string' ? semester.trim() : '';
 
   if (!name || !registerNumber || !email || !phone || !department || !year || !semester || !password || !confirmPassword) {
     return res.status(400).json({ message: 'Please fill in all fields' });
+  }
+
+  if (!isValidEmail(email)) {
+    return res.status(400).json({ message: 'Please provide a valid email address' });
+  }
+
+  if (typeof password !== 'string' || password.length < 8) {
+    return res.status(400).json({ message: 'Password must be at least 8 characters long' });
   }
 
   if (password !== confirmPassword) {
@@ -74,19 +92,12 @@ const registerUser = async (req, res) => {
   res.status(201).json({
     message: 'Registration successful',
     token,
-    user: {
-      id: user._id,
-      name: user.name,
-      registerNumber: user.registerNumber,
-      email: user.email,
-      role: user.role,
-      demo: user.isDemo === true,
-    },
+    user: serializeUser(user),
   });
 };
 
 const loginUser = async (req, res) => {
-  const { registerNumber, email, password } = req.body;
+  const { registerNumber, email, password } = req.body || {};
   const normalizedEmail = typeof email === 'string' ? email.trim().toLowerCase() : '';
   const normalizedRegisterNumber = typeof registerNumber === 'string' ? registerNumber.trim() : '';
   const loginPassword = typeof password === 'string' ? password : '';
@@ -95,24 +106,20 @@ const loginUser = async (req, res) => {
     return res.status(400).json({ message: 'Register number or email and password are required' });
   }
 
-  const usesEmail = Boolean(normalizedEmail);
-  const identifier = usesEmail ? normalizedEmail : normalizedRegisterNumber;
-  const query = usesEmail
+  const query = normalizedEmail
     ? { email: normalizedEmail }
     : { registerNumber: normalizedRegisterNumber };
 
   const user = await User.findOne(query);
-  console.info('[auth] Login lookup', { userFound: Boolean(user) });
 
   if (!user) {
-    return res.status(401).json({ message: 'User not found' });
+    return res.status(401).json({ message: 'Invalid credentials' });
   }
 
   const isMatch = await bcrypt.compare(loginPassword, user.password);
-  console.info('[auth] Password comparison', { bcryptComparePassed: isMatch });
 
   if (!isMatch) {
-    return res.status(401).json({ message: 'Wrong password' });
+    return res.status(401).json({ message: 'Invalid credentials' });
   }
 
   if (user.isActive === false) {
@@ -125,17 +132,7 @@ const loginUser = async (req, res) => {
   res.status(200).json({
     message: 'Login successful',
     token,
-    user: {
-      id: user._id,
-      name: user.name,
-      registerNumber: user.registerNumber,
-      email: user.email,
-      department: user.department,
-      year: user.year,
-      semester: user.semester,
-      role: user.role,
-      demo: user.isDemo === true,
-    },
+    user: serializeUser(user),
   });
 };
 

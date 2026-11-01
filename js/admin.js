@@ -7,14 +7,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   let studentSearchTimer;
   let userSearchTimer;
 
-  const escapeHtml = (value) => String(value ?? '').replace(/[&<>"']/g, (character) => ({
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    "'": '&#39;',
-  }[character]));
-
   const renderStudents = (students) => {
     const tbody = document.getElementById('studentsTableBody');
     tbody.innerHTML = '';
@@ -110,12 +102,17 @@ document.addEventListener('DOMContentLoaded', async () => {
           event.target.value = previousStatus;
           return;
         }
+        const remark = window.prompt('Enter a remark (optional)', '');
+        if (remark === null) {
+          event.target.value = previousStatus;
+          return;
+        }
         try {
           await apiRequest(`/admin/requests/${id}/status`, {
             method: 'PATCH',
             body: JSON.stringify({
               status,
-              adminRemark: 'Updated by admin',
+              ...(remark.trim() ? { adminRemark: remark.trim() } : {}),
             }),
           });
           showToast('Request status updated', 'success');
@@ -200,9 +197,10 @@ document.addEventListener('DOMContentLoaded', async () => {
       document.getElementById('totalUsers').textContent = dashboard.totalUsers || 0;
       document.getElementById('totalRequests').textContent = dashboard.totalRequests || 0;
       document.getElementById('pendingRequests').textContent = dashboard.pendingRequests || 0;
+      document.getElementById('inProgressRequests').textContent = dashboard.inProgressRequests || 0;
       document.getElementById('approvedRequests').textContent = dashboard.approvedRequests || 0;
+      document.getElementById('resolvedRequests').textContent = dashboard.resolvedRequests || 0;
       document.getElementById('rejectedRequests').textContent = dashboard.rejectedRequests || 0;
-      document.getElementById('resolvedComplaints').textContent = dashboard.resolvedComplaints || 0;
 
       renderStudents(students.students || []);
       renderUsers(users.users || []);
