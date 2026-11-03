@@ -184,7 +184,13 @@ Smart-Student-Service-Portal/
 
 ---
 
-Request submissions and status changes create in-app notifications and send email through Resend when configured. Verify the sender domain in Resend before setting `MAIL_FROM`. Without `RESEND_API_KEY`, email previews are logged locally; demo accounts never send real email.
+Request submissions and status changes create in-app notifications and send email through Resend when configured. `backend/utils/mailer.js` reads `RESEND_API_KEY` and `MAIL_FROM` from the environment; keep the real values in the root `.env`, not in source code. The `onboarding@resend.dev` test sender is restricted to your own Resend account email. To deliver to students, verify a domain you control in Resend, then set `MAIL_FROM` in `.env` to an address on that domain, for example `Smart Student Service Portal <notifications@your-domain.edu>`. Use the same `MAIL_FROM` setting for a local test:
+
+```sh
+npm run test:email -- student@example.edu
+```
+
+The test script sends one real email to the supplied address and requires both `RESEND_API_KEY` and `MAIL_FROM`. Without `RESEND_API_KEY`, normal application email previews are logged locally; demo accounts never send real email.
 
 ## Database Seeding
 

@@ -32,7 +32,7 @@ const notifyUser = async ({ user, request, type, title, message, oldStatus, newS
       isDemo: user.isDemo === true,
     });
   } catch (error) {
-    console.error('[notifications] Email delivery failed:', error.message);
+    console.error('[email] Delivery failed:', error.message);
   }
 
   return notification;

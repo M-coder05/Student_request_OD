@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node backend/server.js",
     "dev": "nodemon backend/server.js",
+    "test:email": "node test-email.js",
     "seed:admin": "node backend/seedAdmin.js",
     "seed:demo": "node backend/seedDemo.js",
     "client:install": "npm --prefix client install",

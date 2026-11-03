@@ -6,7 +6,8 @@ const sendMail = async ({ to, subject, html, text, isDemo = false }) => {
     return { sent: false };
   }
 
-  if (!process.env.MAIL_FROM) {
+  const from = process.env.MAIL_FROM;
+  if (!from) {
     throw new Error('MAIL_FROM must be configured to send email');
   }
 
@@ -17,7 +18,7 @@ const sendMail = async ({ to, subject, html, text, isDemo = false }) => {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      from: process.env.MAIL_FROM,
+      from,
       to,
       subject,
       html,
@@ -25,11 +26,25 @@ const sendMail = async ({ to, subject, html, text, isDemo = false }) => {
     }),
   });
 
-  if (!response.ok) {
-    throw new Error(`Resend email request failed with status ${response.status}`);
+  const responseText = await response.text();
+  let result;
+  try {
+    result = responseText ? JSON.parse(responseText) : null;
+  } catch {
+    if (response.ok) {
+      throw new Error('Resend returned an invalid response');
+    }
+    result = { message: responseText };
   }
 
-  return response.json();
+  if (!response.ok) {
+    const detail = typeof result?.message === 'string' && result.message.trim()
+      ? `: ${result.message}`
+      : '';
+    throw new Error(`Resend email request failed with status ${response.status}${detail}`);
+  }
+
+  return result;
 };
 
 module.exports = sendMail;
