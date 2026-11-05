@@ -6,7 +6,7 @@ import StudentHeader from '../components/StudentHeader';
 import DemoBanner from '../components/DemoBanner';
 
 export default function Profile() {
-  const { user, updateUser } = useAuth();
+  const { user, updateUser, updateToken } = useAuth();
   const { showToast } = useToast();
 
   const [profileData, setProfileData] = useState({
@@ -113,11 +113,12 @@ export default function Profile() {
     setSavingPassword(true);
 
     try {
-      await apiRequest('/student/change-password', {
+      const result = await apiRequest('/student/change-password', {
         method: 'PUT',
         body: JSON.stringify(passwordData),
       });
 
+      updateToken(result.token);
       showToast('Password changed successfully');
       setPasswordData({
         currentPassword: '',

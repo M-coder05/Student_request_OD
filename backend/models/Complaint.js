@@ -7,8 +7,8 @@ const complaintSchema = new mongoose.Schema(
     registerNumber: { type: String, required: true },
     department: { type: String, required: true },
     category: { type: String, required: true },
-    subject: { type: String, required: true },
-    description: { type: String, required: true },
+    subject: { type: String, required: true, maxlength: 200 },
+    description: { type: String, required: true, maxlength: 1000 },
     status: {
       type: String,
       enum: ['Pending', 'In Progress', 'Resolved', 'Rejected'],

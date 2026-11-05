@@ -10,6 +10,7 @@ const userSchema = new mongoose.Schema(
     year: { type: String, required: true, trim: true },
     semester: { type: String, required: true, trim: true },
     password: { type: String, required: true },
+    passwordChangedAt: { type: Date },
     role: { type: String, enum: ['student', 'admin', 'super_admin', 'demo_admin'], default: 'student' },
     isDemo: { type: Boolean, default: false, index: true },
     isActive: { type: Boolean, default: true },

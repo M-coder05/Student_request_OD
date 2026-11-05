@@ -28,7 +28,12 @@ const {
 
 const app = express();
 app.set('trust proxy', 1);
+app.disable('x-powered-by');
 const PORT = process.env.PORT || 5000;
+
+if (process.env.RENDER && process.env.NODE_ENV !== 'production') {
+  console.warn('[security] RENDER is set but NODE_ENV is not production; stack traces may be exposed.');
+}
 
 const logDemoReadiness = async () => {
   if (!isDemoModeEnabled()) {

@@ -1,5 +1,6 @@
 const Complaint = require('../models/Complaint');
 const notifyUser = require('../utils/notifyUser');
+const textLengthError = require('../utils/textLengthError');
 
 const generateRequestId = (type) => {
   const random = Math.random().toString(36).slice(2, 8).toUpperCase();
@@ -11,6 +12,14 @@ const createComplaint = async (req, res) => {
 
   if (!category || !subject || !description) {
     return res.status(400).json({ message: 'Please provide category, subject and description' });
+  }
+
+  const lengthError = textLengthError([
+    { label: 'Subject', value: subject, maxLength: 200 },
+    { label: 'Description', value: description, maxLength: 1000 },
+  ]);
+  if (lengthError) {
+    return res.status(400).json({ message: lengthError });
   }
 
   const complaint = await Complaint.create({

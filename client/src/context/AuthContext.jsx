@@ -25,6 +25,11 @@ export function AuthProvider({ children }) {
     localStorage.setItem('user', JSON.stringify(updatedUser));
   };
 
+  const updateToken = (newToken) => {
+    setToken(newToken);
+    localStorage.setItem('token', newToken);
+  };
+
   const logout = () => {
     setToken(null);
     setUser(null);
@@ -42,6 +47,7 @@ export function AuthProvider({ children }) {
         user,
         login,
         updateUser,
+        updateToken,
         logout,
         isAuthenticated,
         isAdmin,

@@ -60,6 +60,7 @@ Smart-Student-Service-Portal/
 │   │   └── errorMiddleware.js     # Global error handling
 │   ├── models/
 │   │   ├── AuditLog.js            # Administrative actions audit trail
+│   │   ├── AllowedStudent.js      # Optional registration allowlist
 │   │   ├── BonafideRequest.js     # Bonafide certificate model
 │   │   ├── Complaint.js           # Student complaint model
 │   │   ├── LeaveRequest.js        # Leave request model
@@ -79,6 +80,7 @@ Smart-Student-Service-Portal/
 │   │   └── requestStats.js        # Status bucket aggregation helper
 │   ├── seedAdmin.js               # Super admin seeding script
 │   ├── seedDemo.js                # Demo student & admin seeding script
+│   ├── scripts/seedAllowedStudents.js # Import allowed register numbers from CSV
 │   └── server.js                  # Main Express application & Vite SPA server
 ├── client/
 │   ├── index.html                 # Single page application HTML shell
@@ -354,6 +356,18 @@ To deploy this application on [Render](https://render.com) as a Web Service:
 - **HTTP Security Headers:** Configured with `helmet` to enforce strict Content Security Policies (CSP), frameguarding, and XSS filtering.
 - **Generic Authentication Responses:** Login errors intentionally return generic messages to avoid revealing whether an email or register number exists.
 - **Demo Account Protections:** Modification endpoints (profile updates and password changes) reject demo account modifications with a `403 Forbidden` response.
+
+## Security Measures
+
+- **JWT authentication with database lookup:** Every authenticated request verifies its JWT and reloads the account from MongoDB.
+- **Role-based admin routes:** Administrative endpoints require an authorized administrator role.
+- **Per-user query scoping:** Students can only access requests associated with their own account.
+- **Password hashing:** Passwords are hashed with bcrypt before storage.
+- **Helmet and CSP:** Helmet sets security headers and a Content Security Policy.
+- **Rate limiting:** Authentication and password-change endpoints have request limits.
+- **Input validation and sanitization:** Request inputs are validated, trimmed where appropriate, and bounded by text-length limits.
+- **Registration allowlist:** Registration can be restricted to a seeded register-number allowlist by setting `ENFORCE_ALLOWLIST=true`. Import CSV entries with `node backend/scripts/seedAllowedStudents.js <csv-path>`.
+- **Token invalidation on password change:** Existing JWTs are rejected after a password update; the change-password response provides a replacement token.
 
 ---
 

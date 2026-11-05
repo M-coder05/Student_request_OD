@@ -1,4 +1,6 @@
 const User = require('../models/User');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 const LeaveRequest = require('../models/LeaveRequest');
 const ODRequest = require('../models/ODRequest');
 const BonafideRequest = require('../models/BonafideRequest');
@@ -68,8 +70,16 @@ const changePassword = async (req, res) => {
 
   const { currentPassword, newPassword, confirmPassword } = req.body || {};
 
-  if (!currentPassword || !newPassword || !confirmPassword) {
+  if (![currentPassword, newPassword, confirmPassword].every((password) => typeof password === 'string' && password)) {
     return res.status(400).json({ message: 'All password fields are required' });
+  }
+
+  if (newPassword.length < 8) {
+    return res.status(400).json({ message: 'Password must be at least 8 characters long' });
+  }
+
+  if (newPassword === currentPassword) {
+    return res.status(400).json({ message: 'New password must be different from your current password' });
   }
 
   if (newPassword !== confirmPassword) {
@@ -77,17 +87,31 @@ const changePassword = async (req, res) => {
   }
 
   const user = await User.findById(req.user._id);
-  const isMatch = await require('bcryptjs').compare(currentPassword, user.password);
+  if (!user) {
+    return res.status(404).json({ message: 'User not found' });
+  }
+  const isMatch = await bcrypt.compare(currentPassword, user.password);
 
   if (!isMatch) {
     return res.status(400).json({ message: 'Current password is incorrect' });
   }
 
-  const salt = await require('bcryptjs').genSalt(10);
-  user.password = await require('bcryptjs').hash(newPassword, salt);
+  const salt = await bcrypt.genSalt(10);
+  user.password = await bcrypt.hash(newPassword, salt);
+  user.passwordChangedAt = new Date();
   await user.save();
 
-  res.status(200).json({ message: 'Password updated successfully' });
+  // JWT timestamps use whole seconds; rounding up keeps this replacement token valid.
+  const token = jwt.sign(
+    {
+      id: user._id,
+      role: user.role,
+      iat: Math.ceil(user.passwordChangedAt.getTime() / 1000),
+    },
+    process.env.JWT_SECRET,
+    { expiresIn: process.env.JWT_EXPIRES_IN || '7d' }
+  );
+  res.status(200).json({ message: 'Password updated successfully', token });
 };
 
 const getDashboardData = async (req, res) => {

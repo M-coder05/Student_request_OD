@@ -8,7 +8,7 @@ const leaveRequestSchema = new mongoose.Schema(
     department: { type: String, required: true },
     fromDate: { type: Date, required: true },
     toDate: { type: Date, required: true },
-    reason: { type: String, required: true },
+    reason: { type: String, required: true, maxlength: 1000 },
     status: {
       type: String,
       enum: ['Pending', 'Approved', 'Rejected', 'In Progress', 'Resolved'],

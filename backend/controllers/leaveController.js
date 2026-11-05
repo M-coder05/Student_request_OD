@@ -1,6 +1,7 @@
 const LeaveRequest = require('../models/LeaveRequest');
 const parseDate = require('../utils/parseDate');
 const notifyUser = require('../utils/notifyUser');
+const textLengthError = require('../utils/textLengthError');
 
 const generateRequestId = (type) => {
   const random = Math.random().toString(36).slice(2, 8).toUpperCase();
@@ -12,6 +13,11 @@ const createLeaveRequest = async (req, res) => {
 
   if (!fromDate || !toDate || !reason) {
     return res.status(400).json({ message: 'Please provide from date, to date and reason' });
+  }
+
+  const lengthError = textLengthError([{ label: 'Reason', value: reason, maxLength: 1000 }]);
+  if (lengthError) {
+    return res.status(400).json({ message: lengthError });
   }
 
   const parsedFromDate = parseDate(fromDate);

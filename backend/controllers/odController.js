@@ -1,6 +1,7 @@
 const ODRequest = require('../models/ODRequest');
 const parseDate = require('../utils/parseDate');
 const notifyUser = require('../utils/notifyUser');
+const textLengthError = require('../utils/textLengthError');
 
 const generateRequestId = (type) => {
   const random = Math.random().toString(36).slice(2, 8).toUpperCase();
@@ -12,6 +13,16 @@ const createODRequest = async (req, res) => {
 
   if (!eventName || !eventDate || !eventLocation || !organizer || !reason) {
     return res.status(400).json({ message: 'Please provide all OD request fields' });
+  }
+
+  const lengthError = textLengthError([
+    { label: 'Event name', value: eventName, maxLength: 200 },
+    { label: 'Event location', value: eventLocation, maxLength: 200 },
+    { label: 'Organizer', value: organizer, maxLength: 200 },
+    { label: 'Reason', value: reason, maxLength: 1000 },
+  ]);
+  if (lengthError) {
+    return res.status(400).json({ message: lengthError });
   }
 
   if (!parseDate(eventDate)) {

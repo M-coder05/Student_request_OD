@@ -13,14 +13,15 @@ const crypto = require('crypto');
 const isDemoAdmin = (user) => user.role === 'demo_admin' && user.isDemo === true;
 
 const getPagination = (query) => {
-  const page = Math.max(Number.parseInt(query.page, 10) || 1, 1);
-  const limit = Math.min(Math.max(Number.parseInt(query.limit, 10) || 100, 1), 100);
+  const page = Math.max(Number.parseInt(String(query.page || ''), 10) || 1, 1);
+  const limit = Math.min(Math.max(Number.parseInt(String(query.limit || ''), 10) || 100, 1), 100);
   return { page, limit, skip: (page - 1) * limit };
 };
 
 const getSort = (query, allowedFields) => {
-  const field = allowedFields.includes(query.sortBy) ? query.sortBy : 'createdAt';
-  return { [field]: query.sortOrder === 'asc' ? 1 : -1 };
+  const requestedField = String(query.sortBy || '');
+  const field = allowedFields.includes(requestedField) ? requestedField : 'createdAt';
+  return { [field]: String(query.sortOrder || '') === 'asc' ? 1 : -1 };
 };
 
 const recordAdminAction = (req, action, recordType, recordId, details) => AuditLog.create({
@@ -142,7 +143,11 @@ const getAllRequests = async (req, res) => {
   const demoStudent = await getDemoStudent(req);
   const requestFilter = getRequestFilter(req.user, demoStudent);
   const { page, limit, skip } = getPagination(req.query);
-  const { status, type, q, from, to } = req.query;
+  const status = req.query.status ? String(req.query.status) : '';
+  const type = req.query.type ? String(req.query.type) : '';
+  const q = req.query.q ? String(req.query.q) : '';
+  const from = req.query.from ? String(req.query.from) : '';
+  const to = req.query.to ? String(req.query.to) : '';
   const sort = getSort(req.query, ['createdAt', 'studentName', 'status', 'type']);
   const sortField = Object.keys(sort)[0];
   const startDate = from ? new Date(from) : null;
@@ -156,9 +161,9 @@ const getAllRequests = async (req, res) => {
     { model: ODRequest, type: 'OD' },
     { model: BonafideRequest, type: 'Bonafide' },
     { model: Complaint, type: 'Complaint' },
-  ].filter((item) => !type || item.type.toLowerCase() === String(type).toLowerCase());
+  ].filter((item) => !type || item.type.toLowerCase() === type.toLowerCase());
   const baseFilter = { ...requestFilter };
-  if (status) baseFilter.status = status;
+  if (status) baseFilter.status = String(status);
   if (startDate || endDate) {
     baseFilter.createdAt = {};
     if (startDate) baseFilter.createdAt.$gte = startDate;

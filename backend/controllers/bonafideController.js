@@ -4,6 +4,7 @@ const BonafideRequest = require('../models/BonafideRequest');
 const notifyUser = require('../utils/notifyUser');
 const generateBonafidePdf = require('../utils/bonafidePdf');
 const { isDemoUser } = require('../config/demo');
+const textLengthError = require('../utils/textLengthError');
 
 const generateRequestId = (type) => {
   const random = Math.random().toString(36).slice(2, 8).toUpperCase();
@@ -15,6 +16,14 @@ const createBonafideRequest = async (req, res) => {
 
   if (!year || !semester || !purpose) {
     return res.status(400).json({ message: 'Please provide year, semester and purpose' });
+  }
+
+  const lengthError = textLengthError([
+    { label: 'Purpose', value: purpose, maxLength: 200 },
+    { label: 'Additional details', value: additionalDetails, maxLength: 1000 },
+  ]);
+  if (lengthError) {
+    return res.status(400).json({ message: lengthError });
   }
 
   const request = await BonafideRequest.create({
@@ -115,7 +124,6 @@ const verifyBonafideCertificate = async (req, res) => {
     certificateNumber: request.certificateNumber,
     studentName: request.studentName,
     department: request.department,
-    purpose: request.purpose,
     issueDate: request.issuedAt,
   });
 };

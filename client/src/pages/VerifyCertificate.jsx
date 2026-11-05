@@ -39,7 +39,6 @@ export default function VerifyCertificate() {
                 <p><strong>Certificate number:</strong> {result.certificateNumber}</p>
                 <p><strong>Student:</strong> {result.studentName}</p>
                 <p><strong>Department:</strong> {result.department}</p>
-                <p><strong>Purpose:</strong> {result.purpose}</p>
                 <p><strong>Issue date:</strong> {result.issueDate ? new Date(result.issueDate).toLocaleDateString() : '--'}</p>
               </>
             ) : (

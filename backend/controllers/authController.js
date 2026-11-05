@@ -1,6 +1,7 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const AllowedStudent = require('../models/AllowedStudent');
 const {
   getDemoAccounts,
   hasDemoCredentials,
@@ -62,6 +63,13 @@ const registerUser = async (req, res) => {
 
   if (password !== confirmPassword) {
     return res.status(400).json({ message: 'Passwords do not match' });
+  }
+
+  if (process.env.ENFORCE_ALLOWLIST === 'true') {
+    const allowedStudent = await AllowedStudent.exists({ registerNumber });
+    if (!allowedStudent) {
+      return res.status(403).json({ message: 'Registration could not be completed' });
+    }
   }
 
   const exists = await User.findOne({
