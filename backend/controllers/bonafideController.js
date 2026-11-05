@@ -82,11 +82,11 @@ const downloadBonafideCertificate = async (req, res) => {
     return res.status(404).json({ message: 'Bonafide request not found' });
   }
 
-  const demo = isDemoUser(req.user);
-  if (!demo && (request.status !== 'Approved' || request.revoked)) {
+  if (request.status !== 'Approved' || request.revoked) {
     return res.status(403).json({ message: 'Certificate is available only for approved requests' });
   }
 
+  const demo = isDemoUser(req.user);
   if (!demo && !request.verificationCode) {
     request.verificationCode = crypto.randomBytes(32).toString('base64url');
     request.certificateNumber = `BONA-${new Date().getFullYear()}-${crypto.randomBytes(5).toString('hex').toUpperCase()}`;

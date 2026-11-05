@@ -161,7 +161,7 @@ export default function Status() {
                       </td>
                       <td>{item.adminRemark || 'No remarks yet'}</td>
                       <td>
-                        {item.type === 'Bonafide' && (item.status === 'Approved' || user?.demo === true) ? (
+                        {item.type === 'Bonafide' && item.status === 'Approved' && !item.revoked ? (
                           <button
                             type="button"
                             className="btn btn-secondary"

@@ -139,6 +139,20 @@ const seedDemo = async () => {
         requestId: 'DEMO-BONA-001',
         createdAt: dateDaysFromNow(-6),
       },
+      {
+        studentId: student._id,
+        studentName: student.name,
+        registerNumber: student.registerNumber,
+        department: student.department,
+        year: student.year,
+        semester: student.semester,
+        purpose: 'Student travel concession',
+        additionalDetails: 'Approved sample request for the demo certificate preview.',
+        status: 'Approved',
+        adminRemark: 'Approved for the requested purpose.',
+        requestId: 'DEMO-BONA-002',
+        createdAt: dateDaysFromNow(-3),
+      },
     ]),
     Complaint.insertMany([
       {
