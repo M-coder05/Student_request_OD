@@ -3,9 +3,13 @@ import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import DemoLogin from '../components/DemoLogin';
 import DemoBanner from '../components/DemoBanner';
+import { useAuth } from '../context/AuthContext';
 
 export default function Home() {
   const containerRef = useRef(null);
+  const { isAuthenticated, user } = useAuth();
+  const appointmentPath =
+    isAuthenticated && user?.role === 'student' ? '/appointments/book' : '/login';
 
   useEffect(() => {
     document.body.className = 'home-page';
@@ -270,11 +274,22 @@ export default function Home() {
                   Open service <span aria-hidden="true">&rarr;</span>
                 </Link>
               </article>
+              <article className="home-service-card">
+                <span className="service-symbol symbol-navy">
+                  <i className="fas fa-calendar-check" aria-hidden="true"></i>
+                </span>
+                <span className="service-index">05 / APPOINTMENTS</span>
+                <h3>Appointment Booking</h3>
+                <p>Book a meeting with your faculty, HOD or Principal.</p>
+                <Link to={appointmentPath}>
+                  Book an appointment <span aria-hidden="true">&rarr;</span>
+                </Link>
+              </article>
               <article className="home-service-card service-card-wide">
                 <span className="service-symbol symbol-navy">
                   <i className="fas fa-arrow-trend-up" aria-hidden="true"></i>
                 </span>
-                <span className="service-index">05 / VISIBILITY</span>
+                <span className="service-index">06 / VISIBILITY</span>
                 <h3>Request Status Tracking</h3>
                 <p>Review submitted requests and follow their current status from your student account.</p>
                 <Link to="/status">
@@ -369,7 +384,7 @@ export default function Home() {
                 </span>
                 <div>
                   <h3>Centralized services</h3>
-                  <p>Find leave, OD, certificate, complaint, and tracking workflows together.</p>
+                  <p>Find leave, OD, certificate, complaint, appointment booking, and tracking workflows together.</p>
                 </div>
               </article>
             </div>
