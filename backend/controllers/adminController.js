@@ -95,10 +95,10 @@ const getAllStudents = async (req, res) => {
 const getAllUsers = async (req, res) => {
   const { page, limit, skip } = getPagination(req.query);
   const filter = isDemoAdmin(req.user)
-    ? { isDemo: true, role: { $in: ['student', 'demo_admin'] } }
+    ? { isDemo: true, role: { $in: ['student', 'faculty', 'hod', 'principal', 'demo_admin'] } }
     : req.user.role === 'super_admin'
       ? {}
-      : { role: 'student', isDemo: { $ne: true } };
+      : { role: { $in: ['student', 'faculty', 'hod', 'principal'] }, isDemo: { $ne: true } };
   const search = String(req.query.q || '').trim();
   if (search) {
     filter.$or = ['name', 'registerNumber', 'email', 'role'].map((field) => ({
@@ -120,13 +120,17 @@ const updateUserAccess = async (req, res) => {
   }
 
   const filter = isDemoAdmin(req.user)
-    ? { _id: id, isDemo: true, role: 'student' }
+    ? { _id: id, isDemo: true, role: { $in: ['student', 'faculty', 'hod', 'principal'] } }
     : { _id: id, isDemo: { $ne: true } };
   const user = await User.findOne(filter);
   if (!user || user.role === 'super_admin') {
     return res.status(404).json({ message: 'User not found or protected' });
   }
-  if (!isDemoAdmin(req.user) && user.role !== 'student' && req.user.role !== 'super_admin') {
+  if (
+    !isDemoAdmin(req.user) &&
+    !['student', 'faculty', 'hod', 'principal'].includes(user.role) &&
+    req.user.role !== 'super_admin'
+  ) {
     return res.status(403).json({ message: 'Only the Super Admin can manage administrator accounts' });
   }
 

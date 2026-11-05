@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { apiRequest } from '../api/client';
+import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import { formatDateTime } from '../utils/formatDate';
 
@@ -10,6 +11,7 @@ export default function NotificationBell() {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { showToast } = useToast();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -51,7 +53,8 @@ export default function NotificationBell() {
     }
 
     setIsOpen(false);
-    navigate('/status');
+    const isStaff = ['faculty', 'hod', 'principal', 'admin', 'super_admin', 'demo_admin'].includes(user?.role);
+    navigate(notification.type === 'Appointment' ? (isStaff ? '/appointments/requests' : '/appointments') : '/status');
   };
 
   return (

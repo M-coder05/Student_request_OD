@@ -6,6 +6,7 @@ import { ToastProvider } from './context/ToastContext';
 // Components
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminRoute from './components/AdminRoute';
+import StaffRoute from './components/StaffRoute';
 
 // Pages
 import Home from './pages/Home';
@@ -22,6 +23,11 @@ import Profile from './pages/Profile';
 import Admin from './pages/Admin';
 import NotFound from './pages/NotFound';
 import VerifyCertificate from './pages/VerifyCertificate';
+import BookAppointment from './pages/BookAppointment';
+import MyAppointments from './pages/MyAppointments';
+import MyAvailability from './pages/MyAvailability';
+import AppointmentRequests from './pages/AppointmentRequests';
+import AppointmentSchedule from './pages/AppointmentSchedule';
 
 export default function App() {
   return (
@@ -45,6 +51,16 @@ export default function App() {
               <Route path="/complaint" element={<Complaint />} />
               <Route path="/status" element={<Status />} />
               <Route path="/profile" element={<Profile />} />
+              <Route path="/appointments/book" element={<BookAppointment />} />
+              <Route path="/appointments" element={<MyAppointments />} />
+            </Route>
+
+            <Route element={<StaffRoute />}>
+              <Route path="/appointments/availability" element={<MyAvailability />} />
+            </Route>
+            <Route element={<StaffRoute adminAllowed />}>
+              <Route path="/appointments/requests" element={<AppointmentRequests />} />
+              <Route path="/appointments/today" element={<AppointmentSchedule />} />
             </Route>
 
             {/* Protected Admin Routes */}

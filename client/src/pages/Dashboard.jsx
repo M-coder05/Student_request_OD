@@ -9,6 +9,7 @@ import DemoBanner from '../components/DemoBanner';
 export default function Dashboard() {
   const { user } = useAuth();
   const { showToast } = useToast();
+  const isStaff = ['faculty', 'hod', 'principal'].includes(user?.role);
 
   const [stats, setStats] = useState({
     totalRequests: 0,
@@ -22,6 +23,10 @@ export default function Dashboard() {
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    if (isStaff) {
+      setLoading(false);
+      return undefined;
+    }
     let isMounted = true;
     async function fetchDashboard() {
       try {
@@ -50,7 +55,41 @@ export default function Dashboard() {
     return () => {
       isMounted = false;
     };
-  }, [showToast]);
+  }, [showToast, isStaff]);
+
+  if (isStaff) {
+    return (
+      <>
+        <DemoBanner />
+        <StudentHeader title="Staff dashboard" showNav />
+        <main className="page-shell">
+          <div className="container">
+            <section className="welcome card">
+              <div><span className="eyebrow">{user?.role}</span><h2>Welcome, {user?.name || 'Staff member'}</h2></div>
+              <div className="profile-summary"><span>Department: {user?.department || '—'}</span></div>
+            </section>
+            <section className="service-grid dashboard-grid">
+              <Link className="service-card dash-card" to="/appointments/requests">
+                <div className="icon-wrap"><i className="fas fa-inbox"></i></div>
+                <h3>Appointment requests</h3>
+                <p>Review, approve, reject or reschedule student requests.</p>
+              </Link>
+              <Link className="service-card dash-card" to="/appointments/today">
+                <div className="icon-wrap"><i className="fas fa-calendar-day"></i></div>
+                <h3>Today's schedule</h3>
+                <p>View today's appointments and record outcomes.</p>
+              </Link>
+              <Link className="service-card dash-card" to="/appointments/availability">
+                <div className="icon-wrap"><i className="fas fa-clock"></i></div>
+                <h3>My availability</h3>
+                <p>Set weekly meeting slots and blackout dates.</p>
+              </Link>
+            </section>
+          </div>
+        </main>
+      </>
+    );
+  }
 
   return (
     <>
@@ -132,6 +171,20 @@ export default function Dashboard() {
               </div>
               <h3>Complaint</h3>
               <p>Report issues and concerns.</p>
+            </Link>
+            <Link className="service-card dash-card" to="/appointments/book">
+              <div className="icon-wrap">
+                <i className="fas fa-calendar-check"></i>
+              </div>
+              <h3>Book appointment</h3>
+              <p>Meet with your Principal, HOD or faculty.</p>
+            </Link>
+            <Link className="service-card dash-card" to="/appointments">
+              <div className="icon-wrap">
+                <i className="fas fa-calendar-alt"></i>
+              </div>
+              <h3>My appointments</h3>
+              <p>Review appointment requests and download approved events.</p>
             </Link>
             <Link className="service-card dash-card" to="/status">
               <div className="icon-wrap">

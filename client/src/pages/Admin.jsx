@@ -8,6 +8,8 @@ import Pagination from '../components/Pagination';
 import Modal from '../components/Modal';
 import DemoBanner from '../components/DemoBanner';
 import { formatDate, formatDateTime } from '../utils/formatDate';
+import { Link } from 'react-router-dom';
+import NotificationBell from '../components/NotificationBell';
 
 export default function Admin() {
   const { logout } = useAuth();
@@ -269,6 +271,11 @@ export default function Admin() {
             <span className="brand-mark">SS</span>
             <span>Admin Dashboard</span>
           </div>
+          <nav className="main-nav">
+            <Link to="/appointments/requests">Appointment requests</Link>
+            <Link to="/appointments/today">Today's schedule</Link>
+          </nav>
+          <NotificationBell />
           <button
             id="adminLogoutBtn"
             type="button"

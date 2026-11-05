@@ -4,8 +4,10 @@ import { useAuth } from '../context/AuthContext';
 import NotificationBell from './NotificationBell';
 
 export default function StudentHeader({ title = 'Student Dashboard', showNav = true }) {
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
   const navigate = useNavigate();
+  const isStaff = ['faculty', 'hod', 'principal'].includes(user?.role);
+  const isAdmin = ['admin', 'super_admin', 'demo_admin'].includes(user?.role);
 
   const handleLogout = () => {
     logout();
@@ -23,8 +25,25 @@ export default function StudentHeader({ title = 'Student Dashboard', showNav = t
         {showNav ? (
           <nav className="main-nav">
             <Link to="/dashboard">Dashboard</Link>
-            <Link to="/status">Status</Link>
-            <Link to="/profile">Profile</Link>
+            {isStaff ? (
+              <>
+                <Link to="/appointments/availability">My availability</Link>
+                <Link to="/appointments/requests">Appointment requests</Link>
+                <Link to="/appointments/today">Today's schedule</Link>
+              </>
+            ) : isAdmin ? (
+              <>
+                <Link to="/appointments/requests">Appointment requests</Link>
+                <Link to="/appointments/today">Today's schedule</Link>
+              </>
+            ) : (
+              <>
+                <Link to="/appointments/book">Book appointment</Link>
+                <Link to="/appointments">My appointments</Link>
+                <Link to="/status">Status</Link>
+                <Link to="/profile">Profile</Link>
+              </>
+            )}
           </nav>
         ) : (
           <div className="nav-actions">

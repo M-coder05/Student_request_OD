@@ -183,6 +183,11 @@ Smart-Student-Service-Portal/
 | `COLLEGE_NAME` | Optional | Institution name printed on bonafide certificates | `Your College Name` |
 | `SIGNATORY_NAME` | Optional | Name printed in the certificate signatory block | `College Principal` |
 | `SIGNATORY_TITLE` | Optional | Title printed in the certificate signatory block | `Principal` |
+| `APPT_MIN_NOTICE_HOURS` | Optional | Minimum advance notice for an appointment (default: 2 hours) | `2` |
+| `APPT_MAX_ACTIVE` | Optional | Maximum active appointments per student per week (default: 2) | `2` |
+| `APPT_CANCEL_BEFORE_HOURS` | Optional | Minimum hours before start when a student may cancel (default: 2) | `2` |
+| `APPT_PENDING_EXPIRE_HOURS` | Optional | Pending appointment request age before lazy expiry (default: 72 hours) | `72` |
+| `APPT_PRINCIPAL_PURPOSE_MIN_LENGTH` | Optional | Minimum purpose length for Principal appointments (default: 30 characters) | `30` |
 
 ---
 
@@ -208,7 +213,9 @@ Run the seed scripts to prepare your database accounts:
    ```bash
    npm run seed:demo
    ```
-   Initializes the demo student (`student.demo@example.com`) with sample request records and the demo admin (`admin.demo@example.com`).
+   Initializes the demo student (`student.demo@example.com`), demo admin (`admin.demo@example.com`), sandboxed Principal/HOD/faculty accounts, and weekday appointment availability.
+
+Appointment staff are active `User` records with a `faculty`, `hod`, or `principal` role. Set each staff member's department and configure their weekly slots from **My availability**; only staff with active availability appear to students. After adding or updating the staff roles in the application's user provisioning process, seed the demo accounts again to reset demo availability.
 
 ---
 
@@ -290,6 +297,23 @@ All backend endpoints are prefixed with `/api`.
 | `GET` | `/api/complaints/:id` | Yes (Bearer) | `student` | Get details of a specific complaint |
 | `GET` | `/api/requests/my` | Yes (Bearer) | `student` | Retrieve aggregated list of all user requests |
 
+### Appointments & Availability
+| Method | Endpoint | Auth Required | Permitted Roles | Purpose |
+|---|---|---|---|---|
+| `GET` | `/api/appointments/staff?role=&department=` | Yes (Bearer) | `student` | List bookable faculty, HODs or Principals in the selected department |
+| `GET` | `/api/appointments/staff/:id/slots?date=YYYY-MM-DD` | Yes (Bearer) | `student` | List free slots in Asia/Kolkata time |
+| `POST` | `/api/appointments` | Yes (Bearer) | `student` | Request an appointment |
+| `GET` | `/api/appointments/mine` | Yes (Bearer) | `student` | List the signed-in student's appointments |
+| `PATCH` | `/api/appointments/:id/cancel` | Yes (Bearer) | Appointment owner | Cancel before the configured cutoff |
+| `GET` | `/api/appointments/:id/calendar` | Yes (Bearer) | Approved appointment owner | Download an `.ics` calendar entry |
+| `GET` | `/api/appointments/staff-queue` | Yes (Bearer) | `faculty`, `hod`, `principal`, administrators | List addressed requests; administrators may review all permitted records |
+| `PATCH` | `/api/appointments/:id/decision` | Yes (Bearer) | Addressed staff, administrators | Approve, reject or reschedule a pending request |
+| `PATCH` | `/api/appointments/:id/complete` | Yes (Bearer) | Addressed staff, administrators | Mark an approved appointment completed |
+| `PATCH` | `/api/appointments/:id/no-show` | Yes (Bearer) | Addressed staff, administrators | Mark an approved appointment no-show |
+| `GET` / `PUT` | `/api/availability/me` | Yes (Bearer) | `faculty`, `hod`, `principal` | Read or replace weekly availability |
+| `GET` / `POST` | `/api/availability/me/blackouts` | Yes (Bearer) | `faculty`, `hod`, `principal` | List or add blackout dates |
+| `DELETE` | `/api/availability/me/blackouts/:id` | Yes (Bearer) | `faculty`, `hod`, `principal` | Remove a blackout date |
+
 ### Administration (`/api/admin`)
 | Method | Endpoint | Auth Required | Permitted Roles | Purpose |
 |---|---|---|---|---|
@@ -312,9 +336,12 @@ All backend endpoints are prefixed with `/api`.
 ## User Roles & Permissions
 
 - **`student`**: Can submit and view their own leave, OD, bonafide, and complaint requests, track resolution states, and modify their own profile.
+- **`faculty`**, **`hod`**, **`principal`**: Can publish availability and manage only appointments addressed to their account.
 - **`admin`**: Can access the administrative suite, view all requests, update statuses, record official remarks, and view student records.
 - **`super_admin`**: Full portal ownership. Can manage all administrative workflows, toggle account statuses (enable/disable), and manage admin access.
 - **`demo_admin`**: Isolated administrator role restricted to reviewing and managing sample data in demo mode.
+
+Students can book either a faculty meeting or an appointment with their HOD/Principal using the same scheduling engine. Seeded demo staff and demo student appointments are isolated from real accounts, and demo emails are logged rather than delivered.
 
 ---
 

@@ -17,6 +17,8 @@ const adminRoutes = require('./routes/adminRoutes');
 const requestsRoutes = require('./routes/requestsRoutes');
 const notificationRoutes = require('./routes/notificationRoutes');
 const verificationRoutes = require('./routes/verificationRoutes');
+const appointmentRoutes = require('./routes/appointmentRoutes');
+const availabilityRoutes = require('./routes/availabilityRoutes');
 const errorMiddleware = require('./middleware/errorMiddleware');
 const seedAdmin = require('./seedAdmin');
 const User = require('./models/User');
@@ -86,6 +88,8 @@ app.use('/api/complaints', complaintRoutes);
 app.use('/api/requests', requestsRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/verify', verificationRoutes);
+app.use('/api/appointments', appointmentRoutes);
+app.use('/api/availability', availabilityRoutes);
 app.use('/api/admin', adminRoutes);
 
 app.get('/api/health', (req, res) => {

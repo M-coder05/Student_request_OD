@@ -14,6 +14,9 @@ const LeaveRequest = require('./models/LeaveRequest');
 const ODRequest = require('./models/ODRequest');
 const BonafideRequest = require('./models/BonafideRequest');
 const Complaint = require('./models/Complaint');
+const Availability = require('./models/Availability');
+const BlackoutDate = require('./models/BlackoutDate');
+const Appointment = require('./models/Appointment');
 
 const dateDaysFromNow = (days) => new Date(Date.now() + days * 24 * 60 * 60 * 1000);
 
@@ -32,8 +35,8 @@ const seedDemo = async () => {
   const accountCollision = await User.findOne({
     isDemo: { $ne: true },
     $or: [
-      { email: { $in: [DEMO_STUDENT_EMAIL, DEMO_ADMIN_EMAIL] } },
-      { registerNumber: { $in: ['DEMO-CS-024', 'DEMO-ADMIN-01'] } },
+      { email: { $in: [DEMO_STUDENT_EMAIL, DEMO_ADMIN_EMAIL, 'principal.demo@example.com', 'hod.demo@example.com', 'faculty.demo@example.com'] } },
+      { registerNumber: { $in: ['DEMO-CS-024', 'DEMO-ADMIN-01', 'DEMO-PRINCIPAL-01', 'DEMO-HOD-01', 'DEMO-FACULTY-01'] } },
     ],
   }).select('email registerNumber');
 
@@ -64,7 +67,7 @@ const seedDemo = async () => {
     { new: true, upsert: true, runValidators: true, setDefaultsOnInsert: true }
   );
 
-  await User.findOneAndUpdate(
+  const admin = await User.findOneAndUpdate(
     { email: DEMO_ADMIN_EMAIL, isDemo: true },
     {
       $set: {
@@ -84,12 +87,45 @@ const seedDemo = async () => {
     { new: true, upsert: true, runValidators: true, setDefaultsOnInsert: true }
   );
 
+  const demoStaffSeeds = [
+    { role: 'principal', name: 'Demo Principal', registerNumber: 'DEMO-PRINCIPAL-01', email: 'principal.demo@example.com', department: 'Administration' },
+    { role: 'hod', name: 'Demo HOD', registerNumber: 'DEMO-HOD-01', email: 'hod.demo@example.com', department: student.department },
+    { role: 'faculty', name: 'Demo Faculty', registerNumber: 'DEMO-FACULTY-01', email: 'faculty.demo@example.com', department: student.department },
+  ];
+  const demoStaff = await Promise.all(demoStaffSeeds.map((staff) => User.findOneAndUpdate(
+    { email: staff.email, isDemo: true },
+    {
+      $set: {
+        ...staff,
+        phone: '9000000002',
+        year: 'N/A',
+        semester: 'N/A',
+        password: admin.password,
+        isDemo: true,
+        isActive: true,
+      },
+    },
+    { new: true, upsert: true, runValidators: true, setDefaultsOnInsert: true }
+  )));
+
   await Promise.all([
     LeaveRequest.deleteMany({ studentId: student._id }),
     ODRequest.deleteMany({ studentId: student._id }),
     BonafideRequest.deleteMany({ studentId: student._id }),
     Complaint.deleteMany({ studentId: student._id }),
+    Appointment.deleteMany({ studentId: student._id, isDemo: true }),
+    Availability.deleteMany({ staffId: { $in: demoStaff.map((staff) => staff._id) } }),
+    BlackoutDate.deleteMany({ staffId: { $in: demoStaff.map((staff) => staff._id) } }),
   ]);
+
+  await Availability.insertMany(demoStaff.flatMap((staff) => [1, 2, 3, 4, 5].map((weekday) => ({
+    staffId: staff._id,
+    weekday,
+    startTime: '09:00',
+    endTime: '17:00',
+    slotMinutes: 30,
+    active: true,
+  }))));
 
   await Promise.all([
     LeaveRequest.insertMany([
