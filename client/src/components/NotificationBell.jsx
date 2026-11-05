@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { apiRequest } from '../api/client';
 import { useToast } from '../context/ToastContext';
+import { formatDateTime } from '../utils/formatDate';
 
 export default function NotificationBell() {
   const [notifications, setNotifications] = useState([]);
@@ -95,7 +96,7 @@ export default function NotificationBell() {
                       {!notification.read && <span className="notification-unread-dot" aria-label="Unread" />}
                     </span>
                     <span>{notification.message}</span>
-                    <small>{new Date(notification.createdAt).toLocaleString()}</small>
+                    <small>{formatDateTime(notification.createdAt)}</small>
                   </button>
                 </li>
               ))}

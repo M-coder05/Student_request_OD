@@ -6,6 +6,7 @@ import { useToast } from '../context/ToastContext';
 import StudentHeader from '../components/StudentHeader';
 import StatusBadge from '../components/StatusBadge';
 import DemoBanner from '../components/DemoBanner';
+import { formatDateTime } from '../utils/formatDate';
 
 export default function Status() {
   const { showToast } = useToast();
@@ -153,9 +154,7 @@ export default function Status() {
                       <td>{item.requestId || item._id}</td>
                       <td>{item.type || item.requestType || 'Request'}</td>
                       <td>
-                        {item.createdAt
-                          ? new Date(item.createdAt).toLocaleDateString()
-                          : '--'}
+                        {formatDateTime(item.createdAt)}
                       </td>
                       <td>
                         <StatusBadge status={item.status} />

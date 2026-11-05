@@ -139,7 +139,12 @@ const generateBonafidePdf = async (request, { demo = false } = {}) => {
   const issuedDate = request.issuedAt ? new Date(request.issuedAt) : new Date();
   const issuedDateText = Number.isNaN(issuedDate.getTime())
     ? 'Not available'
-    : issuedDate.toLocaleDateString('en-GB');
+    : new Intl.DateTimeFormat('en-GB', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      timeZone: 'UTC',
+    }).format(issuedDate);
   doc.font('Helvetica-Bold').fontSize(10).fillColor('#192b43')
     .text(`Issue date: ${issuedDateText}`, 82, 640, { width: 190 });
   if (!demo && request.certificateNumber) {

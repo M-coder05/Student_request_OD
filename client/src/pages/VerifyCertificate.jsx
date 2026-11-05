@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { apiRequest } from '../api/client';
 import Navbar from '../components/Navbar';
+import { formatDate } from '../utils/formatDate';
 
 export default function VerifyCertificate() {
   const { code } = useParams();
@@ -39,7 +40,7 @@ export default function VerifyCertificate() {
                 <p><strong>Certificate number:</strong> {result.certificateNumber}</p>
                 <p><strong>Student:</strong> {result.studentName}</p>
                 <p><strong>Department:</strong> {result.department}</p>
-                <p><strong>Issue date:</strong> {result.issueDate ? new Date(result.issueDate).toLocaleDateString() : '--'}</p>
+                <p><strong>Issue date:</strong> {formatDate(result.issueDate)}</p>
               </>
             ) : (
               <h1 style={{ color: 'var(--danger)' }}>

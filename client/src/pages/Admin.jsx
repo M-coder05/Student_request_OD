@@ -7,6 +7,7 @@ import StatusBadge from '../components/StatusBadge';
 import Pagination from '../components/Pagination';
 import Modal from '../components/Modal';
 import DemoBanner from '../components/DemoBanner';
+import { formatDate, formatDateTime } from '../utils/formatDate';
 
 export default function Admin() {
   const { logout } = useAuth();
@@ -618,9 +619,7 @@ export default function Admin() {
                             <StatusBadge status={status} />
                           </td>
                           <td>
-                            {req.createdAt
-                              ? new Date(req.createdAt).toLocaleDateString()
-                              : '--'}
+                            {formatDateTime(req.createdAt)}
                           </td>
                           <td>
                             <select
@@ -672,7 +671,7 @@ export default function Admin() {
               ) : (
                 activities.map((act) => (
                   <li key={act._id}>
-                    {new Date(act.createdAt).toLocaleString()} •{' '}
+                    {formatDateTime(act.createdAt)} •{' '}
                     <strong>{act.administratorName}</strong> •{' '}
                     <span>{act.action?.replace(/_/g, ' ')}</span> •{' '}
                     <span>
@@ -739,9 +738,7 @@ export default function Admin() {
               <div>
                 <small className="muted">Submitted On</small>
                 <div>
-                  {selectedRequest.createdAt
-                    ? new Date(selectedRequest.createdAt).toLocaleString()
-                    : '--'}
+                  {formatDateTime(selectedRequest.createdAt)}
                 </div>
               </div>
               <div>
@@ -795,7 +792,13 @@ export default function Admin() {
                       <span style={{ textTransform: 'capitalize', fontWeight: 600 }}>
                         {key.replace(/([A-Z])/g, ' $1')}:
                       </span>{' '}
-                      <span>{String(val)}</span>
+                      <span>
+                        {/date$/i.test(key)
+                          ? formatDate(val)
+                          : /(?:at|timestamp)$/i.test(key)
+                            ? formatDateTime(val)
+                            : String(val)}
+                      </span>
                     </div>
                   ))}
               </div>
@@ -828,7 +831,7 @@ export default function Admin() {
                         </h3>
                         <p>
                           <span>
-                            {new Date(step.changedAt).toLocaleString()}
+                            {formatDateTime(step.changedAt)}
                           </span>
                           {' • '}
                           <span>Admin: {step.adminName}</span>
