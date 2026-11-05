@@ -12,7 +12,7 @@ import { Link } from 'react-router-dom';
 import NotificationBell from '../components/NotificationBell';
 
 export default function Admin() {
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
   const { showToast } = useToast();
   const navigate = useNavigate();
 
@@ -274,6 +274,7 @@ export default function Admin() {
           <nav className="main-nav">
             <Link to="/appointments/requests">Appointment requests</Link>
             <Link to="/appointments/today">Today's schedule</Link>
+            {user?.role === 'super_admin' && user?.demo !== true ? <Link to="/admin/staff">Staff management</Link> : null}
           </nav>
           <NotificationBell />
           <button

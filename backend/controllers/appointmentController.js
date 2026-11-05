@@ -112,9 +112,14 @@ const getBookableStaff = async (req, res) => {
     isActive: { $ne: false },
     isDemo: req.user.isDemo === true,
   };
-  if (typeof department === 'string' && department.trim()) filter.department = department.trim();
+  if (typeof department === 'string' && department.trim()) {
+    filter.$or = [
+      { staffDepartment: department.trim() },
+      { staffDepartment: { $in: ['', null] }, department: department.trim() },
+    ];
+  }
   const staff = await User.find(filter)
-    .select('name department role')
+    .select('name department staffDepartment role')
     .sort({ role: 1, name: 1 });
   const activeStaffIds = staff.length
     ? await Availability.distinct('staffId', {
@@ -123,7 +128,17 @@ const getBookableStaff = async (req, res) => {
     })
     : [];
   const activeStaff = new Set(activeStaffIds.map(String));
-  return res.status(200).json({ staff: staff.filter((member) => activeStaff.has(String(member._id))) });
+  return res.status(200).json({
+    staff: staff
+      .filter((member) => activeStaff.has(String(member._id)))
+      .map((member) => {
+        const staffMember = typeof member.toObject === 'function' ? member.toObject() : member;
+        return {
+          ...staffMember,
+          department: member.staffDepartment || member.department || '',
+        };
+      }),
+  });
 };
 
 const getAvailableSlots = async (req, res) => {
@@ -139,8 +154,9 @@ const getAvailableSlots = async (req, res) => {
     role: { $in: STAFF_ROLES },
     isActive: { $ne: false },
     isDemo: req.user.isDemo === true,
-  }).select('name department role');
+  }).select('name department staffDepartment role');
   if (!staff) return res.status(404).json({ message: 'Bookable staff member not found' });
+  staff.department = staff.staffDepartment || staff.department || '';
 
   await expirePendingAppointments({ staffId: staff._id, isDemo: staff.isDemo === true });
   const weekday = weekdayForDate(date);
@@ -218,7 +234,8 @@ const createAppointment = async (req, res) => {
     isDemo: req.user.isDemo === true,
   });
   if (!staff) return res.status(404).json({ message: 'Bookable staff member not found' });
-  if (staff.role !== 'principal' && staff.department !== req.user.department) {
+  const staffDepartment = staff.staffDepartment || staff.department || '';
+  if (staff.role !== 'principal' && staffDepartment !== req.user.department) {
     return res.status(403).json({ message: 'You can only book staff in your department' });
   }
   if (staff.role === 'principal' && cleanPurpose.length < getPrincipalPurposeLength()) {

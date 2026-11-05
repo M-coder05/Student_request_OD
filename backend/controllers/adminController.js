@@ -9,8 +9,81 @@ const { DEMO_STUDENT_EMAIL } = require('../config/demo');
 const getRequestStatusCounts = require('../utils/requestStats');
 const notifyUser = require('../utils/notifyUser');
 const crypto = require('crypto');
+const bcrypt = require('bcryptjs');
 
 const isDemoAdmin = (user) => user.role === 'demo_admin' && user.isDemo === true;
+const STAFF_ROLES = ['faculty', 'hod', 'principal'];
+const isDuplicateKey = (error) => error?.code === 11000;
+const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+const generateTemporaryPassword = () => crypto.randomBytes(24).toString('hex');
+
+const validateStaffFields = (fields, { partial = false } = {}) => {
+  const clean = {};
+  const stringFields = ['name', 'employeeId', 'phone', 'role'];
+  for (const field of stringFields) {
+    if (fields[field] === undefined && partial) continue;
+    if (typeof fields[field] !== 'string') return { error: `${field} is required` };
+    clean[field] = fields[field].trim();
+  }
+  if (fields.staffDepartment !== undefined) {
+    if (typeof fields.staffDepartment !== 'string') return { error: 'staffDepartment must be a string' };
+    clean.staffDepartment = fields.staffDepartment.trim();
+  } else if (!partial && fields.role !== 'principal') {
+    return { error: 'staffDepartment is required for faculty and HOD accounts' };
+  }
+  if (!partial) {
+    if (typeof fields.email !== 'string') return { error: 'email is required' };
+    clean.email = fields.email.trim().toLowerCase();
+  }
+
+  if (clean.name !== undefined && (clean.name.length < 2 || clean.name.length > 100)) {
+    return { error: 'Name must be between 2 and 100 characters' };
+  }
+  if (clean.employeeId !== undefined && (clean.employeeId.length < 1 || clean.employeeId.length > 50)) {
+    return { error: 'Employee ID must be between 1 and 50 characters' };
+  }
+  if (clean.phone !== undefined && (clean.phone.length < 5 || clean.phone.length > 30)) {
+    return { error: 'A valid phone number is required' };
+  }
+  if (clean.role !== undefined && !STAFF_ROLES.includes(clean.role)) {
+    return { error: 'Role must be faculty, hod or principal' };
+  }
+  if (
+    clean.staffDepartment !== undefined &&
+    clean.staffDepartment.length > 100
+  ) {
+    return { error: 'Department must be at most 100 characters' };
+  }
+  const role = clean.role || fields.currentRole;
+  const department = clean.staffDepartment;
+  if (
+    (!partial || department !== undefined || clean.role !== undefined) &&
+    role !== 'principal' &&
+    !(department || fields.currentDepartment)
+  ) {
+    return { error: 'Department is required for faculty and HOD accounts' };
+  }
+  if (!partial && (!clean.email || !isValidEmail(clean.email))) {
+    return { error: 'Please provide a valid email address' };
+  }
+  return { clean };
+};
+
+const publicStaffAccount = (staff) => ({
+  _id: staff._id,
+  name: staff.name,
+  email: staff.email,
+  registerNumber: staff.registerNumber,
+  employeeId: staff.registerNumber,
+  phone: staff.phone,
+  role: staff.role,
+  department: staff.staffDepartment || staff.department || '',
+  staffDepartment: staff.staffDepartment || '',
+  isActive: staff.isActive !== false,
+  mustChangePassword: staff.mustChangePassword === true,
+  createdAt: staff.createdAt,
+  updatedAt: staff.updatedAt,
+});
 
 const getPagination = (query) => {
   const page = Math.max(Number.parseInt(String(query.page || ''), 10) || 1, 1);
@@ -317,6 +390,240 @@ const updateRequestStatus = async (req, res) => {
   res.status(404).json({ message: 'Request not found' });
 };
 
+const createStaffAccount = async (req, res) => {
+  const { clean, error } = validateStaffFields(req.body || {});
+  if (error) return res.status(400).json({ message: error });
+
+  const duplicate = await User.exists({
+    $or: [
+      { email: clean.email },
+      { registerNumber: clean.employeeId },
+    ],
+  });
+  if (duplicate) return res.status(409).json({ message: 'Email or employee ID already exists' });
+
+  const temporaryPassword = generateTemporaryPassword();
+  const password = await bcrypt.hash(temporaryPassword, 10);
+  let staff;
+  try {
+    staff = await User.create({
+      name: clean.name,
+      registerNumber: clean.employeeId,
+      email: clean.email,
+      phone: clean.phone,
+      department: clean.staffDepartment || '',
+      staffDepartment: clean.staffDepartment || '',
+      password,
+      role: clean.role,
+      mustChangePassword: true,
+      createdBy: req.user._id,
+      isDemo: false,
+      isActive: true,
+    });
+  } catch (createError) {
+    if (isDuplicateKey(createError)) {
+      return res.status(409).json({ message: 'Email or employee ID already exists' });
+    }
+    throw createError;
+  }
+
+  await recordAdminAction(
+    req,
+    'staff_created',
+    'User',
+    staff._id,
+    `${staff.name} (${staff.role}, employee ID ${staff.registerNumber})`
+  );
+  return res.status(201).json({
+    message: 'Staff account created',
+    staff: publicStaffAccount(staff),
+    temporaryPassword,
+  });
+};
+
+const getStaffAccounts = async (req, res) => {
+  const { page, limit, skip } = getPagination(req.query);
+  const filter = { role: { $in: STAFF_ROLES }, isDemo: { $ne: true } };
+  const role = String(req.query.role || '');
+  if (role) {
+    if (!STAFF_ROLES.includes(role)) return res.status(400).json({ message: 'Invalid staff role filter' });
+    filter.role = role;
+  }
+  const status = String(req.query.active ?? req.query.status ?? '');
+  if (status === 'true' || status === 'active') filter.isActive = { $ne: false };
+  else if (status === 'false' || status === 'disabled') filter.isActive = false;
+  else if (status) return res.status(400).json({ message: 'Active status filter must be true or false' });
+
+  const search = String(req.query.q || '').trim();
+  if (search) {
+    const escapedSearch = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    filter.$or = ['name', 'email', 'registerNumber'].map((field) => ({
+      [field]: { $regex: escapedSearch, $options: 'i' },
+    }));
+  }
+  const department = String(req.query.department || '').trim();
+  if (department) {
+    const departmentPattern = new RegExp(
+      department.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'),
+      'i'
+    );
+    filter.$and = [{
+      $or: [
+        { staffDepartment: departmentPattern },
+        { staffDepartment: { $in: ['', null] }, department: departmentPattern },
+      ],
+    }];
+  }
+
+  const [accounts, total] = await Promise.all([
+    User.find(filter)
+      .sort({ name: 1 })
+      .skip(skip)
+      .limit(limit)
+      .select('-password'),
+    User.countDocuments(filter),
+  ]);
+  return res.status(200).json({
+    staff: accounts.map(publicStaffAccount),
+    total,
+    page,
+    pages: Math.ceil(total / limit),
+  });
+};
+
+const updateStaffAccount = async (req, res) => {
+  if (!mongoose.isValidObjectId(req.params.id)) {
+    return res.status(400).json({ message: 'A valid staff account ID is required' });
+  }
+  if (String(req.params.id) === String(req.user._id)) {
+    return res.status(400).json({ message: 'You cannot edit or demote your own account' });
+  }
+  const staff = await User.findOne({
+    _id: req.params.id,
+    role: { $in: STAFF_ROLES },
+    isDemo: { $ne: true },
+  });
+  if (!staff) return res.status(404).json({ message: 'Staff account not found' });
+
+  const input = req.body || {};
+  const fields = {
+    name: input.name,
+    phone: input.phone,
+    role: input.role,
+    staffDepartment: input.staffDepartment,
+    employeeId: input.employeeId,
+    currentRole: staff.role,
+    currentDepartment: staff.staffDepartment || staff.department || '',
+  };
+  const { clean, error } = validateStaffFields(fields, { partial: true });
+  if (error) return res.status(400).json({ message: error });
+  if (
+    String(staff._id) === String(req.user._id) &&
+    clean.role !== undefined &&
+    clean.role !== staff.role
+  ) {
+    return res.status(400).json({ message: 'You cannot demote your own account' });
+  }
+
+  const nextRole = clean.role || staff.role;
+  const nextDepartment = clean.staffDepartment !== undefined
+    ? clean.staffDepartment
+    : (staff.staffDepartment || staff.department || '');
+  if (nextRole !== 'principal' && !nextDepartment) {
+    return res.status(400).json({ message: 'Department is required for faculty and HOD accounts' });
+  }
+  const changedFields = [];
+  if (clean.name !== undefined) { staff.name = clean.name; changedFields.push('name'); }
+  if (clean.phone !== undefined) { staff.phone = clean.phone; changedFields.push('phone'); }
+  if (clean.role !== undefined) { staff.role = clean.role; changedFields.push('role'); }
+  if (clean.employeeId !== undefined) {
+    staff.registerNumber = clean.employeeId;
+    changedFields.push('employee ID');
+  }
+  if (clean.staffDepartment !== undefined || clean.role === 'principal') {
+    staff.staffDepartment = nextRole === 'principal' ? (clean.staffDepartment || '') : nextDepartment;
+    staff.department = staff.staffDepartment;
+    changedFields.push('department');
+  } else if (staff.staffDepartment && !staff.department) {
+    staff.department = staff.staffDepartment;
+  }
+
+  try {
+    await staff.save();
+  } catch (saveError) {
+    if (isDuplicateKey(saveError)) return res.status(409).json({ message: 'Employee ID already exists' });
+    throw saveError;
+  }
+  await recordAdminAction(
+    req,
+    'staff_updated',
+    'User',
+    staff._id,
+    `${staff.name} (${staff.role}); updated ${[...new Set(changedFields)].join(', ') || 'no fields'}`
+  );
+  return res.status(200).json({ message: 'Staff account updated', staff: publicStaffAccount(staff) });
+};
+
+const updateStaffAccountStatus = async (req, res) => {
+  if (!mongoose.isValidObjectId(req.params.id) || typeof req.body?.isActive !== 'boolean') {
+    return res.status(400).json({ message: 'A valid staff account and account status are required' });
+  }
+  if (String(req.params.id) === String(req.user._id) && req.body.isActive === false) {
+    return res.status(400).json({ message: 'You cannot disable your own account' });
+  }
+  const staff = await User.findOne({
+    _id: req.params.id,
+    role: { $in: STAFF_ROLES },
+    isDemo: { $ne: true },
+  });
+  if (!staff) return res.status(404).json({ message: 'Staff account not found' });
+  const wasActive = staff.isActive !== false;
+  staff.isActive = req.body.isActive;
+  await staff.save();
+  if (wasActive !== staff.isActive) {
+    await recordAdminAction(
+      req,
+      staff.isActive ? 'staff_enabled' : 'staff_disabled',
+      'User',
+      staff._id,
+      `${staff.name} (${staff.role})`
+    );
+  }
+  return res.status(200).json({
+    message: `Staff account ${staff.isActive ? 'enabled' : 'disabled'}`,
+    staff: publicStaffAccount(staff),
+  });
+};
+
+const resetStaffPassword = async (req, res) => {
+  if (!mongoose.isValidObjectId(req.params.id)) {
+    return res.status(400).json({ message: 'A valid staff account ID is required' });
+  }
+  const staff = await User.findOne({
+    _id: req.params.id,
+    role: { $in: STAFF_ROLES },
+    isDemo: { $ne: true },
+  });
+  if (!staff) return res.status(404).json({ message: 'Staff account not found' });
+
+  const temporaryPassword = generateTemporaryPassword();
+  staff.password = await bcrypt.hash(temporaryPassword, 10);
+  staff.passwordChangedAt = new Date();
+  staff.mustChangePassword = true;
+  await staff.save();
+  await recordAdminAction(
+    req,
+    'staff_password_reset',
+    'User',
+    staff._id,
+    `${staff.name} (${staff.role})`
+  );
+  return res.status(200).json({
+    message: 'Temporary password generated',
+    temporaryPassword,
+  });
+};
+
 module.exports = {
   getAdminDashboard,
   getAllStudents,
@@ -326,4 +633,9 @@ module.exports = {
   getRequestById,
   getRecentActivity,
   updateRequestStatus,
+  createStaffAccount,
+  getStaffAccounts,
+  updateStaffAccount,
+  updateStaffAccountStatus,
+  resetStaffPassword,
 };

@@ -25,6 +25,17 @@ const authMiddleware = async (req, res, next) => {
     }
 
     req.user = user;
+    if (
+      user.mustChangePassword &&
+      !(
+        (req.method === 'GET' && req.baseUrl === '/api/auth' && req.path === '/me') ||
+        (req.method === 'GET' && req.baseUrl === '/api/student' && req.path === '/profile') ||
+        (req.method === 'PUT' && req.baseUrl === '/api/student' && req.path === '/change-password')
+      )
+    ) {
+      return res.status(403).json({ message: 'Password change required' });
+    }
+
     next();
   } catch (error) {
     return res.status(401).json({ message: 'Unauthorized: Invalid token' });

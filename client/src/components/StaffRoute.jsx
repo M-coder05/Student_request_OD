@@ -11,9 +11,8 @@ export default function StaffRoute({ adminAllowed = false }) {
     adminAllowed && ADMIN_ROLES.includes(user?.role)
   );
 
-  if (!isAuthenticated || !allowed) {
-    return <Navigate to="/dashboard" replace />;
-  }
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+  if (!allowed) return <Navigate to={ADMIN_ROLES.includes(user?.role) ? '/admin' : '/dashboard'} replace />;
 
   return <Outlet />;
 }

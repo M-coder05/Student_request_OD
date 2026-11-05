@@ -1,4 +1,5 @@
 const express = require('express');
+const { rateLimit } = require('express-rate-limit');
 const authMiddleware = require('../middleware/authMiddleware');
 const adminMiddleware = require('../middleware/adminMiddleware');
 const {
@@ -10,11 +11,35 @@ const {
   getRequestById,
   getRecentActivity,
   updateRequestStatus,
+  createStaffAccount,
+  getStaffAccounts,
+  updateStaffAccount,
+  updateStaffAccountStatus,
+  resetStaffPassword,
 } = require('../controllers/adminController');
 
 const router = express.Router();
+const requireSuperAdmin = (req, res, next) => {
+  if (req.user?.role !== 'super_admin' || req.user.isDemo === true) {
+    return res.status(403).json({ message: 'Super Admin access required' });
+  }
+  return next();
+};
+const staffPasswordResetRateLimit = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 5,
+  keyGenerator: (req) => req.user._id.toString(),
+  standardHeaders: 'draft-7',
+  legacyHeaders: false,
+  message: { message: 'Too many password reset attempts. Please try again later.' },
+});
 
 router.use(authMiddleware, adminMiddleware);
+router.get('/staff', requireSuperAdmin, getStaffAccounts);
+router.post('/staff', requireSuperAdmin, createStaffAccount);
+router.put('/staff/:id', requireSuperAdmin, updateStaffAccount);
+router.patch('/staff/:id/status', requireSuperAdmin, updateStaffAccountStatus);
+router.post('/staff/:id/reset-password', requireSuperAdmin, staffPasswordResetRateLimit, resetStaffPassword);
 router.get('/dashboard', getAdminDashboard);
 router.get('/students', getAllStudents);
 router.get('/users', getAllUsers);

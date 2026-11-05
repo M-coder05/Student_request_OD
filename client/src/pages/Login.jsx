@@ -12,19 +12,24 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const { login, isAuthenticated, isAdmin } = useAuth();
+  const { login, isAuthenticated, isAdmin, user } = useAuth();
   const { showToast } = useToast();
   const navigate = useNavigate();
 
   useEffect(() => {
     document.body.className = 'auth-body student-auth login-auth';
     if (isAuthenticated) {
-      navigate(isAdmin ? '/admin' : '/dashboard', { replace: true });
+      const destination = isAdmin
+        ? '/admin'
+        : ['faculty', 'hod', 'principal'].includes(user?.role)
+          ? '/appointments/requests'
+          : '/dashboard';
+      navigate(destination, { replace: true });
     }
     return () => {
       document.body.className = '';
     };
-  }, [isAuthenticated, isAdmin, navigate]);
+  }, [isAuthenticated, isAdmin, user?.role, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -45,7 +50,12 @@ export default function Login() {
 
       login(result.token, result.user);
       showToast('Signed in successfully');
-      navigate(result.user?.role && ['admin', 'super_admin', 'demo_admin'].includes(result.user.role) ? '/admin' : '/dashboard');
+      const destination = result.user?.role && ['admin', 'super_admin', 'demo_admin'].includes(result.user.role)
+        ? '/admin'
+        : ['faculty', 'hod', 'principal'].includes(result.user?.role)
+          ? '/appointments/requests'
+          : '/dashboard';
+      navigate(destination);
     } catch (err) {
       showToast(err.message || 'Login failed', 'error');
     } finally {
@@ -89,17 +99,17 @@ export default function Login() {
           <div className="auth-panel-heading">
             <span className="auth-panel-kicker">STUDENT ACCOUNT</span>
             <h2 id="login-title">Sign in to continue</h2>
-            <p className="muted">Use your register number and password.</p>
+            <p className="muted">Students can use a register number; staff can sign in with their email.</p>
           </div>
 
           <form id="loginForm" className="auth-form" onSubmit={handleSubmit}>
             <div className="field-wrap">
-              <label htmlFor="login-register-number">Register Number or Email</label>
+              <label htmlFor="login-register-number">Register Number, Employee ID or Email</label>
               <input
                 id="login-register-number"
                 type="text"
                 name="registerNumber"
-                placeholder="Enter register number or email"
+                placeholder="Enter register number, employee ID or email"
                 autoComplete="username"
                 value={identifier}
                 onChange={(e) => setIdentifier(e.target.value)}

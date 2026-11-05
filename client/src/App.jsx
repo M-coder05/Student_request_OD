@@ -7,6 +7,7 @@ import { ToastProvider } from './context/ToastContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import AdminRoute from './components/AdminRoute';
 import StaffRoute from './components/StaffRoute';
+import PasswordChangeRoute from './components/PasswordChangeRoute';
 
 // Pages
 import Home from './pages/Home';
@@ -28,6 +29,8 @@ import MyAppointments from './pages/MyAppointments';
 import MyAvailability from './pages/MyAvailability';
 import AppointmentRequests from './pages/AppointmentRequests';
 import AppointmentSchedule from './pages/AppointmentSchedule';
+import StaffManagement from './pages/StaffManagement';
+import SetPassword from './pages/SetPassword';
 
 export default function App() {
   return (
@@ -35,12 +38,14 @@ export default function App() {
       <ToastProvider>
         <BrowserRouter>
           <Routes>
+            <Route element={<PasswordChangeRoute />}>
             {/* Public Routes */}
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/admin-login" element={<AdminLogin />} />
             <Route path="/verify/:code" element={<VerifyCertificate />} />
+            <Route path="/set-password" element={<SetPassword />} />
 
             {/* Protected Student Routes */}
             <Route element={<ProtectedRoute />}>
@@ -66,10 +71,12 @@ export default function App() {
             {/* Protected Admin Routes */}
             <Route element={<AdminRoute />}>
               <Route path="/admin" element={<Admin />} />
+              <Route path="/admin/staff" element={<StaffManagement />} />
             </Route>
 
             {/* 404 Catch-All */}
             <Route path="*" element={<NotFound />} />
+            </Route>
           </Routes>
         </BrowserRouter>
       </ToastProvider>

@@ -21,11 +21,13 @@ const serializeUser = (user) => ({
   name: user.name,
   registerNumber: user.registerNumber,
   email: user.email,
-  department: user.department,
+  department: user.department || user.staffDepartment || '',
+  staffDepartment: user.staffDepartment || '',
   year: user.year,
   semester: user.semester,
   role: user.role,
   demo: user.isDemo === true,
+  mustChangePassword: user.mustChangePassword === true,
 });
 
 const registerUser = async (req, res) => {

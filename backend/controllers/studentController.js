@@ -15,11 +15,13 @@ const serializeUser = (user) => ({
   name: user.name,
   registerNumber: user.registerNumber,
   email: user.email,
-  department: user.department,
+  department: user.department || user.staffDepartment || '',
+  staffDepartment: user.staffDepartment || '',
   year: user.year,
   semester: user.semester,
   role: user.role,
   demo: user.isDemo === true,
+  mustChangePassword: user.mustChangePassword === true,
 });
 
 const getStudentProfile = async (req, res) => {
@@ -99,6 +101,7 @@ const changePassword = async (req, res) => {
   const salt = await bcrypt.genSalt(10);
   user.password = await bcrypt.hash(newPassword, salt);
   user.passwordChangedAt = new Date();
+  user.mustChangePassword = false;
   await user.save();
 
   // JWT timestamps use whole seconds; rounding up keeps this replacement token valid.

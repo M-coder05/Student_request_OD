@@ -215,7 +215,9 @@ Run the seed scripts to prepare your database accounts:
    ```
    Initializes the demo student (`student.demo@example.com`), demo admin (`admin.demo@example.com`), sandboxed Principal/HOD/faculty accounts, and weekday appointment availability.
 
-Appointment staff are active `User` records with a `faculty`, `hod`, or `principal` role. Set each staff member's department and configure their weekly slots from **My availability**; only staff with active availability appear to students. After adding or updating the staff roles in the application's user provisioning process, seed the demo accounts again to reset demo availability.
+Appointment staff are active `User` records with a `faculty`, `hod`, or `principal` role. A permanent **Super Admin** creates and manages real staff accounts from **Admin dashboard → Staff management**; regular admins and demo accounts cannot manage or view real staff through that page. Add each staff member's name, work email, unique employee ID, phone, role and (for faculty/HOD) department. Principal department is optional. Staff accounts do not use student year or semester fields.
+
+When an account is created, the Super Admin receives a random temporary password once. Share it with the staff member securely; it is not stored in plain text and cannot be viewed again. Staff sign in on the regular login page using their work email and temporary password, then must set a new password before accessing the portal. Staff can then configure weekly appointment slots under **My availability** and process requests from **Appointment requests**. To issue a replacement credential, the Super Admin uses **Reset password** in Staff management; the new temporary password is shown once and must be changed at the next sign-in. Disabling a staff account prevents login and removes them from new appointment bookings while preserving their existing appointments for admin review.
 
 ---
 

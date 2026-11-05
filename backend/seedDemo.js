@@ -88,9 +88,9 @@ const seedDemo = async () => {
   );
 
   const demoStaffSeeds = [
-    { role: 'principal', name: 'Demo Principal', registerNumber: 'DEMO-PRINCIPAL-01', email: 'principal.demo@example.com', department: 'Administration' },
-    { role: 'hod', name: 'Demo HOD', registerNumber: 'DEMO-HOD-01', email: 'hod.demo@example.com', department: student.department },
-    { role: 'faculty', name: 'Demo Faculty', registerNumber: 'DEMO-FACULTY-01', email: 'faculty.demo@example.com', department: student.department },
+    { role: 'principal', name: 'Demo Principal', registerNumber: 'DEMO-PRINCIPAL-01', email: 'principal.demo@example.com', staffDepartment: '' },
+    { role: 'hod', name: 'Demo HOD', registerNumber: 'DEMO-HOD-01', email: 'hod.demo@example.com', staffDepartment: student.department },
+    { role: 'faculty', name: 'Demo Faculty', registerNumber: 'DEMO-FACULTY-01', email: 'faculty.demo@example.com', staffDepartment: student.department },
   ];
   const demoStaff = await Promise.all(demoStaffSeeds.map((staff) => User.findOneAndUpdate(
     { email: staff.email, isDemo: true },
@@ -98,12 +98,13 @@ const seedDemo = async () => {
       $set: {
         ...staff,
         phone: '9000000002',
-        year: 'N/A',
-        semester: 'N/A',
+        department: staff.staffDepartment,
         password: admin.password,
         isDemo: true,
         isActive: true,
+        mustChangePassword: false,
       },
+      $unset: { year: 1, semester: 1 },
     },
     { new: true, upsert: true, runValidators: true, setDefaultsOnInsert: true }
   )));
