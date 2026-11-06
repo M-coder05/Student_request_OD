@@ -3,6 +3,7 @@ import { Navigate, useNavigate } from 'react-router-dom';
 import { apiRequest } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import PasswordInput from '../components/PasswordInput';
 
 export default function SetPassword() {
   const { user, updateToken, updateUser } = useAuth();
@@ -46,15 +47,15 @@ export default function SetPassword() {
         <form className="auth-form" onSubmit={submit}>
           <div className="field-wrap">
             <label htmlFor="temporary-password">Temporary password</label>
-            <input id="temporary-password" type="password" autoComplete="current-password" value={currentPassword} onChange={(event) => setCurrentPassword(event.target.value)} required disabled={submitting} />
+            <PasswordInput id="temporary-password" autoComplete="current-password" value={currentPassword} onChange={(event) => setCurrentPassword(event.target.value)} required disabled={submitting} />
           </div>
           <div className="field-wrap">
             <label htmlFor="new-password">New password</label>
-            <input id="new-password" type="password" autoComplete="new-password" value={newPassword} onChange={(event) => setNewPassword(event.target.value)} minLength={8} required disabled={submitting} />
+            <PasswordInput id="new-password" autoComplete="new-password" value={newPassword} onChange={(event) => setNewPassword(event.target.value)} minLength={8} required disabled={submitting} />
           </div>
           <div className="field-wrap">
             <label htmlFor="confirm-password">Confirm new password</label>
-            <input id="confirm-password" type="password" autoComplete="new-password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} minLength={8} required disabled={submitting} />
+            <PasswordInput id="confirm-password" autoComplete="new-password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} minLength={8} required disabled={submitting} />
           </div>
           <button type="submit" className="btn btn-primary full-width" disabled={submitting}>
             {submitting ? 'Updating…' : 'Set password'}

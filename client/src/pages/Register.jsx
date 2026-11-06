@@ -4,6 +4,7 @@ import { apiRequest } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import DemoBanner from '../components/DemoBanner';
+import PasswordInput from '../components/PasswordInput';
 
 export default function Register() {
   const [formData, setFormData] = useState({
@@ -18,8 +19,6 @@ export default function Register() {
     confirmPassword: '',
   });
 
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const { login, isAuthenticated, isAdmin } = useAuth();
@@ -240,55 +239,31 @@ export default function Register() {
               </div>
               <div className="field-wrap">
                 <label htmlFor="register-password">Password</label>
-                <div className="password-field">
-                  <input
-                    id="register-password"
-                    type={showPassword ? 'text' : 'password'}
-                    name="password"
-                    placeholder="Create a password"
-                    autoComplete="new-password"
-                    value={formData.password}
-                    onChange={handleChange}
-                    required
-                    disabled={loading}
-                  />
-                  <button
-                    className="password-toggle"
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    aria-controls="register-password"
-                    aria-label={showPassword ? 'Hide password' : 'Show password'}
-                  >
-                    {showPassword ? 'Hide' : 'Show'}
-                  </button>
-                </div>
+                <PasswordInput
+                  id="register-password"
+                  name="password"
+                  placeholder="Create a password"
+                  autoComplete="new-password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  required
+                  disabled={loading}
+                />
               </div>
             </div>
 
             <div className="field-wrap">
               <label htmlFor="register-confirm-password">Confirm Password</label>
-              <div className="password-field">
-                <input
-                  id="register-confirm-password"
-                  type={showConfirmPassword ? 'text' : 'password'}
-                  name="confirmPassword"
-                  placeholder="Re-enter your password"
-                  autoComplete="new-password"
-                  value={formData.confirmPassword}
-                  onChange={handleChange}
-                  required
-                  disabled={loading}
-                />
-                <button
-                  className="password-toggle"
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  aria-controls="register-confirm-password"
-                  aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
-                >
-                  {showConfirmPassword ? 'Hide' : 'Show'}
-                </button>
-              </div>
+              <PasswordInput
+                id="register-confirm-password"
+                name="confirmPassword"
+                placeholder="Re-enter your password"
+                autoComplete="new-password"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                required
+                disabled={loading}
+              />
             </div>
 
             <button

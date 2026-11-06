@@ -89,7 +89,7 @@ export default function Dashboard() {
               <div className="dashboard-service-grid">
                 {staffServices.map((service, index) => (
                   <Link className="dashboard-service-link" to={service.href} key={service.href}>
-                    <span className="dashboard-service-number">{String(index + 1).padStart(2, '0')}</span>
+                    <span className="dashboard-service-number" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
                     <span className="dashboard-service-copy">
                       <strong>{service.title}</strong>
                       <small>{service.description}</small>
@@ -159,8 +159,8 @@ export default function Dashboard() {
             )}
           </section>
 
-          <section className="dashboard-services card">
-            <div className="dashboard-section-heading">
+          <section className="dashboard-services dashboard-services-student card">
+            <div className="dashboard-section-heading dashboard-student-section-heading">
               <div>
                 <span className="section-kicker">CAMPUS SERVICES</span>
                 <h2>What would you like to do?</h2>
@@ -170,7 +170,7 @@ export default function Dashboard() {
             <div className="dashboard-service-grid">
               {studentServices.map((service, index) => (
                 <Link className="dashboard-service-link" to={service.href} key={service.href}>
-                  <span className="dashboard-service-number">{String(index + 1).padStart(2, '0')}</span>
+                  <span className="dashboard-service-number" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
                   <span className="dashboard-service-copy">
                     <strong>{service.title}</strong>
                     <small>{service.description}</small>

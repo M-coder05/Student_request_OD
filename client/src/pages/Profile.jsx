@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import StudentHeader from '../components/StudentHeader';
 import DemoBanner from '../components/DemoBanner';
+import PasswordInput from '../components/PasswordInput';
 
 export default function Profile() {
   const { user, updateUser, updateToken } = useAuth();
@@ -295,10 +296,11 @@ export default function Profile() {
 
             <form id="passwordForm" onSubmit={handlePasswordSubmit}>
               <div className="field-wrap">
-                <label>Current Password</label>
-                <input
-                  type="password"
+                <label htmlFor="profile-current-password">Current Password</label>
+                <PasswordInput
+                  id="profile-current-password"
                   name="currentPassword"
+                  autoComplete="current-password"
                   value={passwordData.currentPassword}
                   onChange={(e) =>
                     setPasswordData({
@@ -311,10 +313,11 @@ export default function Profile() {
                 />
               </div>
               <div className="field-wrap">
-                <label>New Password</label>
-                <input
-                  type="password"
+                <label htmlFor="profile-new-password">New Password</label>
+                <PasswordInput
+                  id="profile-new-password"
                   name="newPassword"
+                  autoComplete="new-password"
                   value={passwordData.newPassword}
                   onChange={(e) =>
                     setPasswordData({
@@ -327,10 +330,11 @@ export default function Profile() {
                 />
               </div>
               <div className="field-wrap">
-                <label>Confirm New Password</label>
-                <input
-                  type="password"
+                <label htmlFor="profile-confirm-password">Confirm New Password</label>
+                <PasswordInput
+                  id="profile-confirm-password"
                   name="confirmPassword"
+                  autoComplete="new-password"
                   value={passwordData.confirmPassword}
                   onChange={(e) =>
                     setPasswordData({

@@ -53,6 +53,15 @@ const request = async (baseUrl, path, token, method = 'GET', body) => {
   return { status: response.status, body: await response.json().catch(() => ({})) };
 };
 
+const isValidTemporaryPassword = (password) => (
+  typeof password === 'string' &&
+  password.length === 14 &&
+  /^[ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789]{14}$/.test(password) &&
+  /[ABCDEFGHJKLMNPQRSTUVWXYZ]/.test(password) &&
+  /[abcdefghijkmnpqrstuvwxyz]/.test(password) &&
+  /[23456789]/.test(password)
+);
+
 const main = async () => {
   let server;
   let dropped = false;
@@ -103,7 +112,7 @@ const main = async () => {
       staffDepartment: 'Mathematics',
     });
     assert.equal(created.status, 201);
-    assert.ok(created.body.temporaryPassword.length >= 12);
+    assert.ok(isValidTemporaryPassword(created.body.temporaryPassword), 'Generated staff password must meet the 14-character policy');
     assert.equal(created.body.staff.mustChangePassword, true);
     const staffRecord = await User.findById(created.body.staff._id);
     assert.ok(await bcrypt.compare(created.body.temporaryPassword, staffRecord.password));
@@ -165,6 +174,18 @@ const main = async () => {
     assert.equal(blockedQueue.body.message, 'Password change required');
     assert.equal(blockedAdminEndpoint.status, 403);
     assert.equal(blockedAdminEndpoint.body.message, 'Password change required');
+    const samePassword = await request(baseUrl, '/api/student/change-password', mustChangeLogin.body.token, 'PUT', {
+      currentPassword: created.body.temporaryPassword,
+      newPassword: created.body.temporaryPassword,
+      confirmPassword: created.body.temporaryPassword,
+    });
+    assert.equal(samePassword.status, 400);
+    const shortPassword = await request(baseUrl, '/api/student/change-password', mustChangeLogin.body.token, 'PUT', {
+      currentPassword: created.body.temporaryPassword,
+      newPassword: 'short7',
+      confirmPassword: 'short7',
+    });
+    assert.equal(shortPassword.status, 400);
     const passwordChanged = await request(baseUrl, '/api/student/change-password', mustChangeLogin.body.token, 'PUT', {
       currentPassword: created.body.temporaryPassword,
       newPassword: 'Changed-password-123',
@@ -217,13 +238,20 @@ const main = async () => {
     assert.equal(enabled.status, 200);
     const reset = await request(baseUrl, `/api/admin/staff/${staffRecord._id}/reset-password`, superToken, 'POST', {});
     assert.equal(reset.status, 200);
-    assert.ok(reset.body.temporaryPassword.length >= 12);
+    assert.ok(isValidTemporaryPassword(reset.body.temporaryPassword), 'Reset password must meet the 14-character policy');
+    assert.ok(await bcrypt.compare(reset.body.temporaryPassword, (await User.findById(staffRecord._id)).password));
     const resetLogin = await request(baseUrl, '/api/auth/login', '', 'POST', {
       email: staffRecord.email,
       password: reset.body.temporaryPassword,
     });
     assert.equal(resetLogin.status, 200);
     assert.equal(resetLogin.body.user.mustChangePassword, true);
+    const resetPasswordChanged = await request(baseUrl, '/api/student/change-password', resetLogin.body.token, 'PUT', {
+      currentPassword: reset.body.temporaryPassword,
+      newPassword: 'Reset-change-123',
+      confirmPassword: 'Reset-change-123',
+    });
+    assert.equal(resetPasswordChanged.status, 200);
     const disableAgain = await request(baseUrl, `/api/admin/staff/${staffRecord._id}/status`, superToken, 'PATCH', { isActive: false });
     assert.equal(disableAgain.status, 200);
     console.log('PASS 5: Disabled staff login returned 401 and the active-only bookable staff list no longer contained that account.');

@@ -15,7 +15,25 @@ const isDemoAdmin = (user) => user.role === 'demo_admin' && user.isDemo === true
 const STAFF_ROLES = ['faculty', 'hod', 'principal'];
 const isDuplicateKey = (error) => error?.code === 11000;
 const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-const generateTemporaryPassword = () => crypto.randomBytes(24).toString('hex');
+const TEMP_PASSWORD_UPPERCASE = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+const TEMP_PASSWORD_LOWERCASE = 'abcdefghijkmnpqrstuvwxyz';
+const TEMP_PASSWORD_DIGITS = '23456789';
+const TEMP_PASSWORD_ALPHABET = `${TEMP_PASSWORD_UPPERCASE}${TEMP_PASSWORD_LOWERCASE}${TEMP_PASSWORD_DIGITS}`;
+const generateTemporaryPassword = () => {
+  const password = [
+    TEMP_PASSWORD_UPPERCASE[crypto.randomInt(TEMP_PASSWORD_UPPERCASE.length)],
+    TEMP_PASSWORD_LOWERCASE[crypto.randomInt(TEMP_PASSWORD_LOWERCASE.length)],
+    TEMP_PASSWORD_DIGITS[crypto.randomInt(TEMP_PASSWORD_DIGITS.length)],
+    ...Array.from({ length: 11 }, () => TEMP_PASSWORD_ALPHABET[crypto.randomInt(TEMP_PASSWORD_ALPHABET.length)]),
+  ];
+
+  for (let index = password.length - 1; index > 0; index -= 1) {
+    const swapIndex = crypto.randomInt(index + 1);
+    [password[index], password[swapIndex]] = [password[swapIndex], password[index]];
+  }
+
+  return password.join('');
+};
 
 const validateStaffFields = (fields, { partial = false } = {}) => {
   const clean = {};

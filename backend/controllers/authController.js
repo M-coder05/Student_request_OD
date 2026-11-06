@@ -11,7 +11,11 @@ const {
 const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
 const generateToken = (user) => {
-  return jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, {
+  const payload = { id: user._id, role: user.role };
+  if (user.passwordChangedAt) {
+    payload.iat = Math.ceil(user.passwordChangedAt.getTime() / 1000);
+  }
+  return jwt.sign(payload, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRES_IN || '7d',
   });
 };

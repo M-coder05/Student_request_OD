@@ -6,11 +6,11 @@ import { useToast } from '../context/ToastContext';
 import DemoLogin from '../components/DemoLogin';
 import DemoBanner from '../components/DemoBanner';
 import ButtonLoader from '../components/ButtonLoader';
+import PasswordInput from '../components/PasswordInput';
 
 export default function Login() {
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const { login, isAuthenticated, isAdmin, user } = useAuth();
@@ -121,28 +121,16 @@ export default function Login() {
 
             <div className="field-wrap">
               <label htmlFor="login-password">Password</label>
-              <div className="password-field">
-                <input
-                  id="login-password"
-                  type={showPassword ? 'text' : 'password'}
-                  name="password"
-                  placeholder="Enter your password"
-                  autoComplete="current-password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  disabled={loading}
-                />
-                <button
-                  className="password-toggle"
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  aria-controls="login-password"
-                  aria-label={showPassword ? 'Hide password' : 'Show password'}
-                >
-                  {showPassword ? 'Hide' : 'Show'}
-                </button>
-              </div>
+              <PasswordInput
+                id="login-password"
+                name="password"
+                placeholder="Enter your password"
+                autoComplete="current-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                disabled={loading}
+              />
             </div>
 
             <ButtonLoader
