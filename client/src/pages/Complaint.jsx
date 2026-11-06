@@ -4,6 +4,7 @@ import { apiRequest } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import DemoBanner from '../components/DemoBanner';
+import ButtonLoader from '../components/ButtonLoader';
 
 export default function Complaint() {
   const { user } = useAuth();
@@ -113,9 +114,14 @@ export default function Complaint() {
             ></textarea>
           </div>
 
-          <button type="submit" className="btn btn-primary" disabled={loading}>
-            {loading ? 'Submitting…' : 'Submit Complaint'}
-          </button>
+          <ButtonLoader
+            type="submit"
+            className="btn btn-primary"
+            loading={loading}
+            loadingText="Submitting…"
+          >
+            Submit Complaint
+          </ButtonLoader>
         </form>
       </div>
     </>

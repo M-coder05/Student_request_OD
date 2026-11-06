@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { apiDownload, apiRequest } from '../api/client';
 import { useAuth } from '../context/AuthContext';
@@ -7,39 +7,25 @@ import StudentHeader from '../components/StudentHeader';
 import StatusBadge from '../components/StatusBadge';
 import DemoBanner from '../components/DemoBanner';
 import { formatDateTime } from '../utils/formatDate';
+import Skeleton from '../components/Skeleton';
+import LoadError from '../components/LoadError';
+import useLoading from '../hooks/useLoading';
 
 export default function Status() {
   const { showToast } = useToast();
   const { user } = useAuth();
-  const [requests, setRequests] = useState([]);
   const [typeFilter, setTypeFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    let isMounted = true;
-    async function fetchRequests() {
-      try {
-        setLoading(true);
-        setError(null);
-        const data = await apiRequest('/requests/my');
-        if (!isMounted) return;
-        setRequests(data.requests || []);
-      } catch (err) {
-        if (!isMounted) return;
-        setError(err.message || 'Failed to load requests');
-        showToast(err.message || 'Failed to load requests', 'error');
-      } finally {
-        if (isMounted) setLoading(false);
-      }
-    }
-
-    fetchRequests();
-    return () => {
-      isMounted = false;
-    };
-  }, [showToast]);
+  const loadRequests = useCallback(async () => {
+    const data = await apiRequest('/requests/my');
+    return data.requests || [];
+  }, []);
+  const {
+    data: requests,
+    loading,
+    error,
+    retry,
+  } = useLoading(loadRequests, []);
 
   const filteredRequests = useMemo(() => {
     return requests.filter((item) => {
@@ -107,22 +93,6 @@ export default function Status() {
             </div>
           </div>
 
-          {error && (
-            <div
-              className="card"
-              style={{
-                padding: '16px',
-                background: '#fee2e2',
-                color: '#b91c1c',
-                marginBottom: '20px',
-              }}
-            >
-              <p style={{ margin: 0 }}>
-                <strong>Error:</strong> {error}
-              </p>
-            </div>
-          )}
-
           <div className="table-wrap card">
             <table>
               <thead>
@@ -135,13 +105,11 @@ export default function Status() {
                   <th>Certificate</th>
                 </tr>
               </thead>
-              <tbody>
-                {loading ? (
-                  <tr>
-                    <td colSpan="6" style={{ textAlign: 'center', padding: '24px' }}>
-                      Loading requests…
-                    </td>
-                  </tr>
+              <tbody aria-busy={loading}>
+                {error ? (
+                  <tr><td colSpan="6"><LoadError message={error} onRetry={retry} /></td></tr>
+                ) : loading ? (
+                  <Skeleton variant="table-row" count={5} columns={6} />
                 ) : filteredRequests.length === 0 ? (
                   <tr>
                     <td colSpan="6" style={{ textAlign: 'center', padding: '24px' }}>

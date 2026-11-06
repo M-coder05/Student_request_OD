@@ -4,6 +4,7 @@ import { apiRequest } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import DemoBanner from '../components/DemoBanner';
+import ButtonLoader from '../components/ButtonLoader';
 
 export default function OD() {
   const { user } = useAuth();
@@ -133,9 +134,14 @@ export default function OD() {
             ></textarea>
           </div>
 
-          <button type="submit" className="btn btn-primary" disabled={loading}>
-            {loading ? 'Submitting…' : 'Submit OD Request'}
-          </button>
+          <ButtonLoader
+            type="submit"
+            className="btn btn-primary"
+            loading={loading}
+            loadingText="Submitting…"
+          >
+            Submit OD Request
+          </ButtonLoader>
         </form>
       </div>
     </>

@@ -1,5 +1,22 @@
 const BASE_URL = (import.meta.env.VITE_API_URL || '').replace(/\/$/, '');
 
+let initialRequestStarted = false;
+let initialRequestState = { pending: false };
+const initialRequestListeners = new Set();
+
+function notifyInitialRequestListeners() {
+  initialRequestListeners.forEach((listener) => listener());
+}
+
+export function getInitialRequestState() {
+  return initialRequestState;
+}
+
+export function subscribeToInitialRequest(listener) {
+  initialRequestListeners.add(listener);
+  return () => initialRequestListeners.delete(listener);
+}
+
 export async function apiRequest(endpoint, options = {}) {
   const token = localStorage.getItem('token');
   const headers = {
@@ -19,18 +36,32 @@ export async function apiRequest(endpoint, options = {}) {
 
   const url = `${BASE_URL}${cleanEndpoint}`;
 
-  const response = await fetch(url, {
-    ...options,
-    headers,
-  });
-
-  const data = await response.json().catch(() => ({}));
-
-  if (!response.ok) {
-    throw new Error(data.message || 'Request failed');
+  const isInitialRequest = !initialRequestStarted;
+  if (isInitialRequest) {
+    initialRequestStarted = true;
+    initialRequestState = { pending: true };
+    notifyInitialRequestListeners();
   }
 
-  return data;
+  try {
+    const response = await fetch(url, {
+      ...options,
+      headers,
+    });
+
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Request failed');
+    }
+
+    return data;
+  } finally {
+    if (isInitialRequest) {
+      initialRequestState = { pending: false };
+      notifyInitialRequestListeners();
+    }
+  }
 }
 
 export async function apiDownload(endpoint) {

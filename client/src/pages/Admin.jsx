@@ -10,6 +10,8 @@ import DemoBanner from '../components/DemoBanner';
 import { formatDate, formatDateTime } from '../utils/formatDate';
 import { Link } from 'react-router-dom';
 import NotificationBell from '../components/NotificationBell';
+import Skeleton from '../components/Skeleton';
+import LoadError from '../components/LoadError';
 
 export default function Admin() {
   const { logout, user } = useAuth();
@@ -290,56 +292,29 @@ export default function Admin() {
 
       <main className="page-shell">
         <div className="container">
-          {error && (
-            <div
-              className="card"
-              style={{
-                padding: '16px',
-                background: '#fee2e2',
-                color: '#b91c1c',
-                marginBottom: '20px',
-              }}
-            >
-              <p style={{ margin: 0 }}>
-                <strong>Error:</strong> {error}
-              </p>
-            </div>
-          )}
+          {error ? <LoadError message={error} onRetry={loadAdminData} /> : null}
 
           {/* Stats Grid */}
           <section className="stats-grid admin-stats">
-            <div className="stat-card">
-              <span className="stat-label">Total Students</span>
-              <strong id="totalStudents">{loading ? '…' : stats.totalStudents}</strong>
-            </div>
-            <div className="stat-card">
-              <span className="stat-label">Registered Users</span>
-              <strong id="totalUsers">{loading ? '…' : stats.totalUsers}</strong>
-            </div>
-            <div className="stat-card">
-              <span className="stat-label">Total Requests</span>
-              <strong id="totalRequests">{loading ? '…' : stats.totalRequests}</strong>
-            </div>
-            <div className="stat-card">
-              <span className="stat-label">Pending</span>
-              <strong id="pendingRequests">{loading ? '…' : stats.pendingRequests}</strong>
-            </div>
-            <div className="stat-card">
-              <span className="stat-label">In Progress</span>
-              <strong id="inProgressRequests">{loading ? '…' : stats.inProgressRequests}</strong>
-            </div>
-            <div className="stat-card">
-              <span className="stat-label">Approved</span>
-              <strong id="approvedRequests">{loading ? '…' : stats.approvedRequests}</strong>
-            </div>
-            <div className="stat-card">
-              <span className="stat-label">Resolved</span>
-              <strong id="resolvedRequests">{loading ? '…' : stats.resolvedRequests}</strong>
-            </div>
-            <div className="stat-card">
-              <span className="stat-label">Rejected</span>
-              <strong id="rejectedRequests">{loading ? '…' : stats.rejectedRequests}</strong>
-            </div>
+            {error ? null : loading ? (
+              <Skeleton variant="card" count={8} />
+            ) : (
+              [
+                ['Total Students', stats.totalStudents, 'totalStudents'],
+                ['Registered Users', stats.totalUsers, 'totalUsers'],
+                ['Total Requests', stats.totalRequests, 'totalRequests'],
+                ['Pending', stats.pendingRequests, 'pendingRequests'],
+                ['In Progress', stats.inProgressRequests, 'inProgressRequests'],
+                ['Approved', stats.approvedRequests, 'approvedRequests'],
+                ['Resolved', stats.resolvedRequests, 'resolvedRequests'],
+                ['Rejected', stats.rejectedRequests, 'rejectedRequests'],
+              ].map(([label, value, id]) => (
+                <div className="stat-card" key={id}>
+                  <span className="stat-label">{label}</span>
+                  <strong id={id}>{value}</strong>
+                </div>
+              ))
+            )}
           </section>
 
           {/* Students Section */}
@@ -387,10 +362,12 @@ export default function Admin() {
                   </tr>
                 </thead>
                 <tbody id="studentsTableBody">
-                  {students.length === 0 ? (
+                  {loading && students.length === 0 ? (
+                    <Skeleton variant="table-row" count={5} columns={6} />
+                  ) : error && students.length === 0 ? null : students.length === 0 ? (
                     <tr>
                       <td colSpan="6" style={{ textAlign: 'center', padding: '20px' }}>
-                        {loading ? 'Loading students…' : 'No students found.'}
+                        No students found.
                       </td>
                     </tr>
                   ) : (
@@ -461,10 +438,12 @@ export default function Admin() {
                   </tr>
                 </thead>
                 <tbody id="adminUsersTableBody">
-                  {users.length === 0 ? (
+                  {loading && users.length === 0 ? (
+                    <Skeleton variant="table-row" count={5} columns={5} />
+                  ) : error && users.length === 0 ? null : users.length === 0 ? (
                     <tr>
                       <td colSpan="5" style={{ textAlign: 'center', padding: '20px' }}>
-                        {loading ? 'Loading accounts…' : 'No users found.'}
+                        No users found.
                       </td>
                     </tr>
                   ) : (
@@ -604,10 +583,12 @@ export default function Admin() {
                   </tr>
                 </thead>
                 <tbody id="adminRequestsTableBody">
-                  {requests.length === 0 ? (
+                  {loading && requests.length === 0 ? (
+                    <Skeleton variant="table-row" count={5} columns={7} />
+                  ) : error && requests.length === 0 ? null : requests.length === 0 ? (
                     <tr>
                       <td colSpan="7" style={{ textAlign: 'center', padding: '20px' }}>
-                        {loading ? 'Loading requests…' : 'No requests found.'}
+                        No requests found.
                       </td>
                     </tr>
                   ) : (

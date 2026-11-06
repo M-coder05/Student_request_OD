@@ -1,61 +1,41 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { apiRequest } from '../api/client';
 import { useAuth } from '../context/AuthContext';
-import { useToast } from '../context/ToastContext';
 import StudentHeader from '../components/StudentHeader';
 import DemoBanner from '../components/DemoBanner';
+import Skeleton from '../components/Skeleton';
+import LoadError from '../components/LoadError';
+import useLoading from '../hooks/useLoading';
 
 export default function Dashboard() {
   const { user } = useAuth();
-  const { showToast } = useToast();
   const isStaff = ['faculty', 'hod', 'principal'].includes(user?.role);
 
-  const [stats, setStats] = useState({
+  const loadDashboard = useCallback(async () => {
+    const result = await apiRequest('/student/dashboard');
+    return {
+      totalRequests: result.totalRequests ?? 0,
+      pendingRequests: result.pendingRequests ?? 0,
+      inProgressRequests: result.inProgressRequests ?? 0,
+      approvedRequests: result.approvedRequests ?? 0,
+      resolvedRequests: result.resolvedRequests ?? 0,
+      rejectedRequests: result.rejectedRequests ?? 0,
+    };
+  }, []);
+  const {
+    data: stats,
+    loading,
+    error,
+    retry,
+  } = useLoading(loadDashboard, {
     totalRequests: 0,
     pendingRequests: 0,
     inProgressRequests: 0,
     approvedRequests: 0,
     resolvedRequests: 0,
     rejectedRequests: 0,
-  });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    if (isStaff) {
-      setLoading(false);
-      return undefined;
-    }
-    let isMounted = true;
-    async function fetchDashboard() {
-      try {
-        setLoading(true);
-        setError(null);
-        const result = await apiRequest('/student/dashboard');
-        if (!isMounted) return;
-        setStats({
-          totalRequests: result.totalRequests ?? 0,
-          pendingRequests: result.pendingRequests ?? 0,
-          inProgressRequests: result.inProgressRequests ?? 0,
-          approvedRequests: result.approvedRequests ?? 0,
-          resolvedRequests: result.resolvedRequests ?? 0,
-          rejectedRequests: result.rejectedRequests ?? 0,
-        });
-      } catch (err) {
-        if (!isMounted) return;
-        setError(err.message || 'Failed to load dashboard data');
-        showToast(err.message || 'Failed to load dashboard data', 'error');
-      } finally {
-        if (isMounted) setLoading(false);
-      }
-    }
-
-    fetchDashboard();
-    return () => {
-      isMounted = false;
-    };
-  }, [showToast, isStaff]);
+  }, !isStaff);
 
   if (isStaff) {
     return (
@@ -110,37 +90,26 @@ export default function Dashboard() {
             </div>
           </section>
 
-          {error && (
-            <div className="card" style={{ padding: '16px', background: '#fee2e2', color: '#b91c1c', marginBottom: '20px' }}>
-              <p style={{ margin: 0 }}><strong>Error:</strong> {error}</p>
-            </div>
-          )}
+          {error ? <LoadError message={error} onRetry={retry} /> : null}
 
           <section className="stats-grid">
-            <div className="stat-card">
-              <span className="stat-label">Total Requests</span>
-              <strong>{loading ? '…' : stats.totalRequests}</strong>
-            </div>
-            <div className="stat-card">
-              <span className="stat-label">Pending</span>
-              <strong>{loading ? '…' : stats.pendingRequests}</strong>
-            </div>
-            <div className="stat-card">
-              <span className="stat-label">In Progress</span>
-              <strong>{loading ? '…' : stats.inProgressRequests}</strong>
-            </div>
-            <div className="stat-card">
-              <span className="stat-label">Approved</span>
-              <strong>{loading ? '…' : stats.approvedRequests}</strong>
-            </div>
-            <div className="stat-card">
-              <span className="stat-label">Resolved</span>
-              <strong>{loading ? '…' : stats.resolvedRequests}</strong>
-            </div>
-            <div className="stat-card">
-              <span className="stat-label">Rejected</span>
-              <strong>{loading ? '…' : stats.rejectedRequests}</strong>
-            </div>
+            {error ? null : loading ? (
+              <Skeleton variant="card" count={6} />
+            ) : (
+              [
+                ['Total Requests', stats.totalRequests],
+                ['Pending', stats.pendingRequests],
+                ['In Progress', stats.inProgressRequests],
+                ['Approved', stats.approvedRequests],
+                ['Resolved', stats.resolvedRequests],
+                ['Rejected', stats.rejectedRequests],
+              ].map(([label, value]) => (
+                <div className="stat-card" key={label}>
+                  <span className="stat-label">{label}</span>
+                  <strong>{value}</strong>
+                </div>
+              ))
+            )}
           </section>
 
           <section className="service-grid dashboard-grid">

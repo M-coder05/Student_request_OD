@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import DemoLogin from '../components/DemoLogin';
 import DemoBanner from '../components/DemoBanner';
+import ButtonLoader from '../components/ButtonLoader';
 
 export default function AdminLogin() {
   const [email, setEmail] = useState('');
@@ -101,13 +102,14 @@ export default function AdminLogin() {
               </div>
             </div>
 
-            <button
+            <ButtonLoader
               type="submit"
               className="btn btn-primary full-width"
-              disabled={loading}
+              loading={loading}
+              loadingText="Signing in…"
             >
-              {loading ? 'Signing in…' : 'Sign in as Super Admin'}
-            </button>
+              Sign in as Super Admin
+            </ButtonLoader>
           </form>
 
           <DemoLogin

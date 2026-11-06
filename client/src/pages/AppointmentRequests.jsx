@@ -1,30 +1,28 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { apiRequest } from '../api/client';
 import { useToast } from '../context/ToastContext';
 import DemoBanner from '../components/DemoBanner';
 import StatusBadge from '../components/StatusBadge';
 import StudentHeader from '../components/StudentHeader';
 import { formatDate } from '../utils/formatDate';
+import Skeleton from '../components/Skeleton';
+import LoadError from '../components/LoadError';
+import ButtonLoader from '../components/ButtonLoader';
+import useLoading from '../hooks/useLoading';
 
 export default function AppointmentRequests() {
   const { showToast } = useToast();
-  const [appointments, setAppointments] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  const reload = useCallback(async () => {
-    try {
-      const result = await apiRequest('/appointments/staff-queue');
-      setAppointments(result.appointments || []);
-    } catch (error) {
-      showToast(error.message || 'Unable to load appointment requests', 'error');
-    } finally {
-      setLoading(false);
-    }
-  }, [showToast]);
-
-  useEffect(() => {
-    reload();
-  }, [reload]);
+  const loadAppointments = useCallback(async () => {
+    const result = await apiRequest('/appointments/staff-queue');
+    return result.appointments || [];
+  }, []);
+  const {
+    data: appointments,
+    loading,
+    error,
+    retry,
+  } = useLoading(loadAppointments, []);
+  const [action, setAction] = useState(null);
 
   const decide = async (appointment, decision) => {
     let remark = window.prompt('Add a remark (optional):', '');
@@ -39,6 +37,7 @@ export default function AppointmentRequests() {
       body.newStartTime = newStartTime;
     }
     try {
+      setAction({ id: appointment._id, decision });
       await apiRequest(`/appointments/${appointment._id}/decision`, {
         method: 'PATCH',
         body: JSON.stringify(body),
@@ -48,9 +47,11 @@ export default function AppointmentRequests() {
         reject: 'Appointment rejected',
         reschedule: 'Appointment rescheduled',
       }[decision]);
-      await reload();
+      await retry();
     } catch (error) {
       showToast(error.message || 'Unable to update appointment', 'error');
+    } finally {
+      setAction(null);
     }
   };
 
@@ -62,9 +63,18 @@ export default function AppointmentRequests() {
         <div className="container">
           <section className="card">
             <h2>Appointment requests</h2>
-            {loading ? <p>Loading requests…</p> : null}
-            {!loading && !appointments.length ? <p className="muted">No appointment requests.</p> : null}
-            {!loading && appointments.length ? (
+            {error ? <LoadError message={error} onRetry={retry} /> : null}
+            {loading ? (
+              <div className="table-wrap">
+                <table>
+                  <tbody aria-busy="true">
+                    <Skeleton variant="table-row" count={4} columns={7} />
+                  </tbody>
+                </table>
+              </div>
+            ) : null}
+            {!loading && !error && !appointments.length ? <p className="muted">No appointment requests.</p> : null}
+            {!loading && !error && appointments.length ? (
               <div className="table-wrap">
                 <table>
                   <thead><tr><th>Student</th><th>Department</th><th>Date &amp; time</th><th>Purpose</th><th>Status</th><th>Remark</th><th>Actions</th></tr></thead>
@@ -80,8 +90,26 @@ export default function AppointmentRequests() {
                         <td>
                           {appointment.status === 'Pending' ? (
                             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                              <button type="button" className="btn btn-primary" onClick={() => decide(appointment, 'approve')}>Approve</button>
-                              <button type="button" className="btn btn-secondary" onClick={() => decide(appointment, 'reject')}>Reject</button>
+                              <ButtonLoader
+                                type="button"
+                                className="btn btn-primary"
+                                loading={action?.id === appointment._id && action.decision === 'approve'}
+                                disabled={Boolean(action)}
+                                loadingText="Approving…"
+                                onClick={() => decide(appointment, 'approve')}
+                              >
+                                Approve
+                              </ButtonLoader>
+                              <ButtonLoader
+                                type="button"
+                                className="btn btn-secondary"
+                                loading={action?.id === appointment._id && action.decision === 'reject'}
+                                disabled={Boolean(action)}
+                                loadingText="Rejecting…"
+                                onClick={() => decide(appointment, 'reject')}
+                              >
+                                Reject
+                              </ButtonLoader>
                               <button type="button" className="btn btn-secondary" onClick={() => decide(appointment, 'reschedule')}>Reschedule</button>
                             </div>
                           ) : '—'}

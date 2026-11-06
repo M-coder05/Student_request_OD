@@ -4,6 +4,7 @@ import { apiRequest } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import DemoBanner from '../components/DemoBanner';
+import ButtonLoader from '../components/ButtonLoader';
 
 export default function Leave() {
   const { user } = useAuth();
@@ -105,9 +106,14 @@ export default function Leave() {
             ></textarea>
           </div>
 
-          <button type="submit" className="btn btn-primary" disabled={loading}>
-            {loading ? 'Submitting…' : 'Submit Leave Request'}
-          </button>
+          <ButtonLoader
+            type="submit"
+            className="btn btn-primary"
+            loading={loading}
+            loadingText="Submitting…"
+          >
+            Submit Leave Request
+          </ButtonLoader>
         </form>
       </div>
     </>

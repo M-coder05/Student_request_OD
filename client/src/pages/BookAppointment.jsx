@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import DemoBanner from '../components/DemoBanner';
 import StudentHeader from '../components/StudentHeader';
+import ButtonLoader from '../components/ButtonLoader';
 
 const todayInKolkata = () => {
   const parts = new Intl.DateTimeFormat('en-CA', {
@@ -156,9 +157,15 @@ export default function BookAppointment() {
                 <textarea id="appointmentPurpose" value={purpose} onChange={(event) => setPurpose(event.target.value)} minLength={staffRole === 'principal' ? 30 : 10} maxLength={300} rows={4} required />
                 <small className="muted">{purpose.length}/300 characters{staffRole === 'principal' ? ' (minimum 30 for Principal appointments)' : ''}</small>
               </div>
-              <button type="submit" className="btn btn-primary" disabled={submitting || !staffId || !date || !startTime}>
-                {submitting ? 'Submitting…' : 'Request appointment'}
-              </button>
+              <ButtonLoader
+                type="submit"
+                className="btn btn-primary"
+                loading={submitting}
+                disabled={!staffId || !date || !startTime}
+                loadingText="Submitting…"
+              >
+                Request appointment
+              </ButtonLoader>
             </form>
           </section>
         </div>

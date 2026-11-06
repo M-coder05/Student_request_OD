@@ -31,12 +31,14 @@ import AppointmentRequests from './pages/AppointmentRequests';
 import AppointmentSchedule from './pages/AppointmentSchedule';
 import StaffManagement from './pages/StaffManagement';
 import SetPassword from './pages/SetPassword';
+import ServerWakeupLoader from './components/ServerWakeupLoader';
 
 export default function App() {
   return (
     <AuthProvider>
       <ToastProvider>
         <BrowserRouter>
+          <ServerWakeupLoader />
           <Routes>
             <Route element={<PasswordChangeRoute />}>
             {/* Public Routes */}
