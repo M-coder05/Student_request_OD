@@ -81,7 +81,7 @@ export default function Home() {
       <Navbar />
 
       <main>
-        <section id="home" class="home-hero">
+        <section id="home" className="home-hero">
           <div className="container home-hero-grid">
             <div className="home-hero-copy">
               <span className="home-eyebrow">
@@ -131,9 +131,7 @@ export default function Home() {
                   </div>
                   <div className="preview-service-list">
                     <Link to="/leave">
-                      <span className="preview-icon icon-cyan">
-                        <i className="fas fa-calendar-check" aria-hidden="true"></i>
-                      </span>
+                      <span className="preview-number">01</span>
                       <span>
                         <strong>Leave request</strong>
                         <small>Apply for academic leave</small>
@@ -141,9 +139,7 @@ export default function Home() {
                       <span className="preview-arrow" aria-hidden="true">&rarr;</span>
                     </Link>
                     <Link to="/od">
-                      <span className="preview-icon icon-blue">
-                        <i className="fas fa-clipboard-list" aria-hidden="true"></i>
-                      </span>
+                      <span className="preview-number">02</span>
                       <span>
                         <strong>On-duty request</strong>
                         <small>Submit an OD application</small>
@@ -151,9 +147,7 @@ export default function Home() {
                       <span className="preview-arrow" aria-hidden="true">&rarr;</span>
                     </Link>
                     <Link to="/bonafide">
-                      <span className="preview-icon icon-gold">
-                        <i className="fas fa-file-lines" aria-hidden="true"></i>
-                      </span>
+                      <span className="preview-number">03</span>
                       <span>
                         <strong>Bonafide certificate</strong>
                         <small>Request an official document</small>

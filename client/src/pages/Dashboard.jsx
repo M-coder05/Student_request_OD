@@ -11,6 +11,33 @@ import useLoading from '../hooks/useLoading';
 export default function Dashboard() {
   const { user } = useAuth();
   const isStaff = ['faculty', 'hod', 'principal'].includes(user?.role);
+  const staffServices = [
+    {
+      href: '/appointments/requests',
+      title: 'Appointment requests',
+      description: 'Review, approve, reject or reschedule student requests.',
+    },
+    {
+      href: '/appointments/today',
+      title: "Today's schedule",
+      description: "View today's appointments and record outcomes.",
+    },
+    {
+      href: '/appointments/availability',
+      title: 'My availability',
+      description: 'Set weekly meeting slots and blackout dates.',
+    },
+  ];
+  const studentServices = [
+    { href: '/leave', title: 'Apply for leave', description: 'Submit an academic leave request.' },
+    { href: '/od', title: 'Apply for on-duty', description: 'Request approval for an official event.' },
+    { href: '/bonafide', title: 'Bonafide certificate', description: 'Request an official student document.' },
+    { href: '/complaint', title: 'Submit a complaint', description: 'Send a concern to the reviewing team.' },
+    { href: '/appointments/book', title: 'Book an appointment', description: 'Meet with your Principal, HOD or faculty.' },
+    { href: '/appointments', title: 'My appointments', description: 'Review requests and approved events.' },
+    { href: '/status', title: 'Track requests', description: 'Check the latest status of submitted requests.' },
+    { href: '/profile', title: 'My profile', description: 'View and update your student details.' },
+  ];
 
   const loadDashboard = useCallback(async () => {
     const result = await apiRequest('/student/dashboard');
@@ -44,26 +71,33 @@ export default function Dashboard() {
         <StudentHeader title="Staff dashboard" showNav />
         <main className="page-shell">
           <div className="container">
-            <section className="welcome card">
-              <div><span className="eyebrow">{user?.role}</span><h2>Welcome, {user?.name || 'Staff member'}</h2></div>
-              <div className="profile-summary"><span>Department: {user?.department || '—'}</span></div>
+            <section className="welcome card dashboard-welcome">
+              <div>
+                <span className="eyebrow">{user?.role}</span>
+                <h2>Welcome, {user?.name || 'Staff member'}</h2>
+                <p>Manage your student appointments and availability.</p>
+              </div>
+              <div className="profile-summary">
+                <span>Department: {user?.department || 'Not set'}</span>
+              </div>
             </section>
-            <section className="service-grid dashboard-grid">
-              <Link className="service-card dash-card" to="/appointments/requests">
-                <div className="icon-wrap"><i className="fas fa-inbox"></i></div>
-                <h3>Appointment requests</h3>
-                <p>Review, approve, reject or reschedule student requests.</p>
-              </Link>
-              <Link className="service-card dash-card" to="/appointments/today">
-                <div className="icon-wrap"><i className="fas fa-calendar-day"></i></div>
-                <h3>Today's schedule</h3>
-                <p>View today's appointments and record outcomes.</p>
-              </Link>
-              <Link className="service-card dash-card" to="/appointments/availability">
-                <div className="icon-wrap"><i className="fas fa-clock"></i></div>
-                <h3>My availability</h3>
-                <p>Set weekly meeting slots and blackout dates.</p>
-              </Link>
+            <section className="dashboard-services card">
+              <div className="dashboard-section-heading">
+                <span className="section-kicker">STAFF WORKSPACE</span>
+                <h2>Choose where to continue</h2>
+              </div>
+              <div className="dashboard-service-grid">
+                {staffServices.map((service, index) => (
+                  <Link className="dashboard-service-link" to={service.href} key={service.href}>
+                    <span className="dashboard-service-number">{String(index + 1).padStart(2, '0')}</span>
+                    <span className="dashboard-service-copy">
+                      <strong>{service.title}</strong>
+                      <small>{service.description}</small>
+                    </span>
+                    <span className="dashboard-service-arrow" aria-hidden="true">&rarr;</span>
+                  </Link>
+                ))}
+              </div>
             </section>
           </div>
         </main>
@@ -78,10 +112,11 @@ export default function Dashboard() {
 
       <main className="page-shell">
         <div className="container">
-          <section className="welcome card">
+          <section className="welcome card dashboard-welcome">
             <div>
               <span className="eyebrow">Welcome back</span>
               <h2>{user?.name || 'Student'}</h2>
+              <p>Your campus requests, in one place.</p>
             </div>
             <div className="profile-summary">
               <span>Reg No: {user?.registerNumber || '--'}</span>
@@ -92,83 +127,58 @@ export default function Dashboard() {
 
           {error ? <LoadError message={error} onRetry={retry} /> : null}
 
-          <section className="stats-grid">
+          <section className="dashboard-overview card">
+            <div className="dashboard-section-heading">
+              <div>
+                <span className="section-kicker">REQUEST OVERVIEW</span>
+                <h2>Your activity</h2>
+              </div>
+              {!loading && !error ? (
+                <span className="dashboard-total">{stats.totalRequests} total requests</span>
+              ) : null}
+            </div>
             {error ? null : loading ? (
-              <Skeleton variant="card" count={6} />
+              <div className="stats-grid" aria-busy="true">
+                <Skeleton variant="card" count={5} />
+              </div>
             ) : (
-              [
-                ['Total Requests', stats.totalRequests],
-                ['Pending', stats.pendingRequests],
-                ['In Progress', stats.inProgressRequests],
-                ['Approved', stats.approvedRequests],
-                ['Resolved', stats.resolvedRequests],
-                ['Rejected', stats.rejectedRequests],
-              ].map(([label, value]) => (
-                <div className="stat-card" key={label}>
-                  <span className="stat-label">{label}</span>
-                  <strong>{value}</strong>
-                </div>
-              ))
+              <div className="dashboard-status-grid">
+                {[
+                  ['Pending', stats.pendingRequests],
+                  ['In progress', stats.inProgressRequests],
+                  ['Approved', stats.approvedRequests],
+                  ['Resolved', stats.resolvedRequests],
+                  ['Rejected', stats.rejectedRequests],
+                ].map(([label, value]) => (
+                  <div className="dashboard-status" key={label}>
+                    <strong>{value}</strong>
+                    <span>{label}</span>
+                  </div>
+                ))}
+              </div>
             )}
           </section>
 
-          <section className="service-grid dashboard-grid">
-            <Link className="service-card dash-card" to="/leave">
-              <div className="icon-wrap">
-                <i className="fas fa-user-check"></i>
+          <section className="dashboard-services card">
+            <div className="dashboard-section-heading">
+              <div>
+                <span className="section-kicker">CAMPUS SERVICES</span>
+                <h2>What would you like to do?</h2>
               </div>
-              <h3>Apply Leave</h3>
-              <p>Submit a leave request.</p>
-            </Link>
-            <Link className="service-card dash-card" to="/od">
-              <div className="icon-wrap">
-                <i className="fas fa-calendar-days"></i>
-              </div>
-              <h3>Apply OD</h3>
-              <p>Submit an on-duty form.</p>
-            </Link>
-            <Link className="service-card dash-card" to="/bonafide">
-              <div className="icon-wrap">
-                <i className="fas fa-file-alt"></i>
-              </div>
-              <h3>Bonafide</h3>
-              <p>Request a certificate.</p>
-            </Link>
-            <Link className="service-card dash-card" to="/complaint">
-              <div className="icon-wrap">
-                <i className="fas fa-comments"></i>
-              </div>
-              <h3>Complaint</h3>
-              <p>Report issues and concerns.</p>
-            </Link>
-            <Link className="service-card dash-card" to="/appointments/book">
-              <div className="icon-wrap">
-                <i className="fas fa-calendar-check"></i>
-              </div>
-              <h3>Book appointment</h3>
-              <p>Meet with your Principal, HOD or faculty.</p>
-            </Link>
-            <Link className="service-card dash-card" to="/appointments">
-              <div className="icon-wrap">
-                <i className="fas fa-calendar-alt"></i>
-              </div>
-              <h3>My appointments</h3>
-              <p>Review appointment requests and download approved events.</p>
-            </Link>
-            <Link className="service-card dash-card" to="/status">
-              <div className="icon-wrap">
-                <i className="fas fa-chart-line"></i>
-              </div>
-              <h3>Track Requests</h3>
-              <p>Monitor request status.</p>
-            </Link>
-            <Link className="service-card dash-card" to="/profile">
-              <div className="icon-wrap">
-                <i className="fas fa-user"></i>
-              </div>
-              <h3>My Profile</h3>
-              <p>View and edit profile.</p>
-            </Link>
+              <p>Choose a service to submit a request or find an update.</p>
+            </div>
+            <div className="dashboard-service-grid">
+              {studentServices.map((service, index) => (
+                <Link className="dashboard-service-link" to={service.href} key={service.href}>
+                  <span className="dashboard-service-number">{String(index + 1).padStart(2, '0')}</span>
+                  <span className="dashboard-service-copy">
+                    <strong>{service.title}</strong>
+                    <small>{service.description}</small>
+                  </span>
+                  <span className="dashboard-service-arrow" aria-hidden="true">&rarr;</span>
+                </Link>
+              ))}
+            </div>
           </section>
         </div>
       </main>
