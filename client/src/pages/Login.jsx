@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { apiRequest } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
@@ -11,10 +11,12 @@ import PasswordInput from '../components/PasswordInput';
 export default function Login() {
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
+  const [loginError, setLoginError] = useState('');
   const [loading, setLoading] = useState(false);
 
   const { login, isAuthenticated, isAdmin, user } = useAuth();
   const { showToast } = useToast();
+  const location = useLocation();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -35,6 +37,7 @@ export default function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setLoginError('');
 
     const payload = {
       password,
@@ -58,7 +61,7 @@ export default function Login() {
           : '/dashboard';
       navigate(destination);
     } catch (err) {
-      showToast(err.message || 'Login failed', 'error');
+      setLoginError(err.message || 'Login failed');
     } finally {
       setLoading(false);
     }
@@ -127,11 +130,21 @@ export default function Login() {
                 placeholder="Enter your password"
                 autoComplete="current-password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  setLoginError('');
+                }}
                 required
                 disabled={loading}
               />
+              <Link className="forgot-password-link" to="/forgot-password">Forgot password?</Link>
             </div>
+            {loginError ? (
+              <p className="password-reset-error" role="alert">
+                {loginError}
+                {loginError.includes('Too many attempts') ? <> <Link to="/forgot-password">Forgot password?</Link></> : null}
+              </p>
+            ) : null}
 
             <ButtonLoader
               type="submit"
@@ -143,6 +156,9 @@ export default function Login() {
             </ButtonLoader>
           </form>
 
+          {location.state?.passwordReset ? (
+            <p className="password-reset-message" role="status">Your password has been reset. Sign in with your new password.</p>
+          ) : null}
           <DemoLogin roleFilter="all" />
 
           <p className="auth-link">

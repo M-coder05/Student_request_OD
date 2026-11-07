@@ -1,5 +1,6 @@
 const express = require('express');
 const authMiddleware = require('../middleware/authMiddleware');
+const requireAppointmentsEnabledForRealStudents = require('../middleware/appointmentFeatureMiddleware');
 const {
   cancelAppointment,
   createAppointment,
@@ -15,9 +16,9 @@ const {
 const router = express.Router();
 
 router.use(authMiddleware);
-router.get('/staff', getBookableStaff);
+router.get('/staff', requireAppointmentsEnabledForRealStudents, getBookableStaff);
 router.get('/staff/:id/slots', getAvailableSlots);
-router.post('/', createAppointment);
+router.post('/', requireAppointmentsEnabledForRealStudents, createAppointment);
 router.get('/mine', getMyAppointments);
 router.patch('/:id/cancel', cancelAppointment);
 router.get('/:id/calendar', downloadAppointmentCalendar);

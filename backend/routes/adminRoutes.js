@@ -16,6 +16,9 @@ const {
   updateStaffAccount,
   updateStaffAccountStatus,
   resetStaffPassword,
+  getPasswordResetRequests,
+  issuePasswordResetRequest,
+  dismissPasswordResetRequest,
 } = require('../controllers/adminController');
 
 const router = express.Router();
@@ -40,6 +43,9 @@ router.post('/staff', requireSuperAdmin, createStaffAccount);
 router.put('/staff/:id', requireSuperAdmin, updateStaffAccount);
 router.patch('/staff/:id/status', requireSuperAdmin, updateStaffAccountStatus);
 router.post('/staff/:id/reset-password', requireSuperAdmin, staffPasswordResetRateLimit, resetStaffPassword);
+router.get('/password-resets', getPasswordResetRequests);
+router.post('/password-resets/:id/issue', staffPasswordResetRateLimit, issuePasswordResetRequest);
+router.post('/password-resets/:id/dismiss', staffPasswordResetRateLimit, dismissPasswordResetRequest);
 router.get('/dashboard', getAdminDashboard);
 router.get('/students', getAllStudents);
 router.get('/users', getAllUsers);

@@ -2,9 +2,11 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import NotificationBell from './NotificationBell';
+import { useFeatures } from '../context/FeatureContext';
 
 export default function StudentHeader({ title = 'Student Dashboard', showNav = true }) {
   const { logout, user } = useAuth();
+  const { appointmentsEnabled } = useFeatures();
   const navigate = useNavigate();
   const isStaff = ['faculty', 'hod', 'principal'].includes(user?.role);
   const isAdmin = ['admin', 'super_admin', 'demo_admin'].includes(user?.role);
@@ -38,8 +40,12 @@ export default function StudentHeader({ title = 'Student Dashboard', showNav = t
               </>
             ) : (
               <>
-                <Link to="/appointments/book">Book appointment</Link>
-                <Link to="/appointments">My appointments</Link>
+                {appointmentsEnabled ? (
+                  <>
+                    <Link to="/appointments/book">Book appointment</Link>
+                    <Link to="/appointments">My appointments</Link>
+                  </>
+                ) : null}
                 <Link to="/status">Status</Link>
                 <Link to="/profile">Profile</Link>
               </>

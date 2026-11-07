@@ -10,6 +10,8 @@ const STATUS_CLASSES = {
   Cancelled: 'status-rejected',
   Completed: 'status-approved',
   'No-show': 'status-rejected',
+  Issued: 'status-progress',
+  Dismissed: 'status-rejected',
 };
 
 export default function StatusBadge({ status }) {

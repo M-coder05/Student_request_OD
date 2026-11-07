@@ -5,36 +5,18 @@ const ODRequest = require('../models/ODRequest');
 const BonafideRequest = require('../models/BonafideRequest');
 const Complaint = require('../models/Complaint');
 const AuditLog = require('../models/AuditLog');
+const PasswordResetRequest = require('../models/PasswordResetRequest');
 const { DEMO_STUDENT_EMAIL } = require('../config/demo');
 const getRequestStatusCounts = require('../utils/requestStats');
 const notifyUser = require('../utils/notifyUser');
 const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
+const generateTemporaryPassword = require('../utils/generateTemporaryPassword');
 
 const isDemoAdmin = (user) => user.role === 'demo_admin' && user.isDemo === true;
 const STAFF_ROLES = ['faculty', 'hod', 'principal'];
 const isDuplicateKey = (error) => error?.code === 11000;
 const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-const TEMP_PASSWORD_UPPERCASE = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
-const TEMP_PASSWORD_LOWERCASE = 'abcdefghijkmnpqrstuvwxyz';
-const TEMP_PASSWORD_DIGITS = '23456789';
-const TEMP_PASSWORD_ALPHABET = `${TEMP_PASSWORD_UPPERCASE}${TEMP_PASSWORD_LOWERCASE}${TEMP_PASSWORD_DIGITS}`;
-const generateTemporaryPassword = () => {
-  const password = [
-    TEMP_PASSWORD_UPPERCASE[crypto.randomInt(TEMP_PASSWORD_UPPERCASE.length)],
-    TEMP_PASSWORD_LOWERCASE[crypto.randomInt(TEMP_PASSWORD_LOWERCASE.length)],
-    TEMP_PASSWORD_DIGITS[crypto.randomInt(TEMP_PASSWORD_DIGITS.length)],
-    ...Array.from({ length: 11 }, () => TEMP_PASSWORD_ALPHABET[crypto.randomInt(TEMP_PASSWORD_ALPHABET.length)]),
-  ];
-
-  for (let index = password.length - 1; index > 0; index -= 1) {
-    const swapIndex = crypto.randomInt(index + 1);
-    [password[index], password[swapIndex]] = [password[swapIndex], password[index]];
-  }
-
-  return password.join('');
-};
-
 const validateStaffFields = (fields, { partial = false } = {}) => {
   const clean = {};
   const stringFields = ['name', 'employeeId', 'phone', 'role'];
@@ -119,6 +101,9 @@ const recordAdminAction = (req, action, recordType, recordId, details) => AuditL
   administratorId: req.user._id,
   administratorName: req.user.name,
   administratorRole: req.user.role,
+  actorId: req.user._id,
+  actorName: req.user.name,
+  actorRole: req.user.role,
   action,
   recordType,
   recordId,
@@ -149,11 +134,24 @@ const getAdminDashboard = async (req, res) => {
   const studentFilter = isDemoAdmin(req.user)
     ? (demoStudent ? { _id: demoStudent._id, role: 'student' } : { _id: { $exists: false } })
     : { role: 'student' };
-  const [totalStudents, totalUsers, requestCounts, resolvedComplaints] = await Promise.all([
+  const resetUserRoles = req.user.role === 'super_admin'
+    ? ['student', ...STAFF_ROLES]
+    : req.user.role === 'admin'
+      ? ['student']
+      : [];
+  const [totalStudents, totalUsers, requestCounts, resolvedComplaints, pendingPasswordResets] = await Promise.all([
     User.countDocuments(studentFilter),
     User.countDocuments(isDemoAdmin(req.user) ? { isDemo: true } : {}),
     getRequestStatusCounts([LeaveRequest, ODRequest, BonafideRequest, Complaint], requestFilter),
     Complaint.countDocuments({ ...requestFilter, status: 'Resolved' }),
+    resetUserRoles.length
+      ? PasswordResetRequest.countDocuments({
+        status: 'Pending',
+        userId: {
+          $in: await User.find({ role: { $in: resetUserRoles }, isDemo: { $ne: true } }).distinct('_id'),
+        },
+      })
+      : 0,
   ]);
 
   res.status(200).json({
@@ -161,7 +159,188 @@ const getAdminDashboard = async (req, res) => {
     totalUsers,
     ...requestCounts,
     resolvedComplaints,
+    pendingPasswordResets,
   });
+};
+
+const getPasswordResetRequests = async (req, res) => {
+  if (!['admin', 'super_admin'].includes(req.user.role) || req.user.isDemo === true) {
+    return res.status(403).json({ message: 'Administrator access required' });
+  }
+
+  const { page, limit, skip } = getPagination(req.query);
+  const roles = req.user.role === 'super_admin'
+    ? ['student', ...STAFF_ROLES, 'admin', 'super_admin']
+    : ['student'];
+  const search = String(req.query.q || '').trim();
+  const userMatch = { role: { $in: roles }, isDemo: { $ne: true } };
+  if (search) {
+    const escapedSearch = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    userMatch.$or = [
+      { name: { $regex: escapedSearch, $options: 'i' } },
+      { registerNumber: { $regex: escapedSearch, $options: 'i' } },
+    ];
+  }
+
+  const userIds = await User.find(userMatch).distinct('_id');
+  if (!userIds.length) {
+    return res.status(200).json({ requests: [], total: 0, page, pages: 1 });
+  }
+
+  const [result] = await PasswordResetRequest.aggregate([
+    { $match: { userId: { $in: userIds } } },
+    { $addFields: { pendingOrder: { $cond: [{ $eq: ['$status', 'Pending'] }, 0, 1] } } },
+    { $sort: { pendingOrder: 1, requestedAt: -1 } },
+    {
+      $facet: {
+        requests: [
+          { $skip: skip },
+          { $limit: limit },
+          {
+            $lookup: {
+              from: User.collection.name,
+              localField: 'userId',
+              foreignField: '_id',
+              as: 'user',
+            },
+          },
+          { $unwind: '$user' },
+          {
+            $project: {
+              userId: 1,
+              identifierUsed: 1,
+              status: 1,
+              requestedAt: 1,
+              handledAt: 1,
+              handledBy: 1,
+              'user.name': 1,
+              'user.registerNumber': 1,
+              'user.role': 1,
+            },
+          },
+        ],
+        total: [{ $count: 'value' }],
+      },
+    },
+  ]);
+  const total = result.total[0]?.value || 0;
+  return res.status(200).json({
+    requests: result.requests,
+    total,
+    page,
+    pages: Math.max(Math.ceil(total / limit), 1),
+  });
+};
+
+const issuePasswordResetRequest = async (req, res) => {
+  if (!['admin', 'super_admin'].includes(req.user.role) || req.user.isDemo === true) {
+    return res.status(403).json({ message: 'Administrator access required' });
+  }
+  if (!mongoose.isValidObjectId(req.params.id)) {
+    return res.status(400).json({ message: 'A valid password reset request ID is required' });
+  }
+
+  const passwordResetRequest = await PasswordResetRequest.findOne({
+    _id: req.params.id,
+    status: 'Pending',
+  });
+  if (!passwordResetRequest) {
+    return res.status(404).json({ message: 'Pending password reset request not found' });
+  }
+  const user = await User.findOne({
+    _id: passwordResetRequest.userId,
+    isActive: { $ne: false },
+    isDemo: { $ne: true },
+  });
+  if (!user) {
+    return res.status(404).json({ message: 'Active account not found' });
+  }
+  if (req.user.role !== 'super_admin' && user.role !== 'student') {
+    return res.status(404).json({ message: 'Pending password reset request not found' });
+  }
+  if (!['student', ...STAFF_ROLES, 'admin', 'super_admin'].includes(user.role)) {
+    return res.status(403).json({ message: 'This account cannot be reset through the admin workflow' });
+  }
+  if (req.body?.identityVerified !== true) {
+    await recordAdminAction(
+      req,
+      'password_reset_issue_rejected',
+      'PasswordResetRequest',
+      passwordResetRequest._id,
+      `Temporary password issue blocked because identity was not verified for ${user.name} (${user.registerNumber})`
+    );
+    return res.status(400).json({ message: 'Identity verification is required' });
+  }
+
+  const handledAt = new Date();
+  const claimedRequest = await PasswordResetRequest.findOneAndUpdate(
+    { _id: passwordResetRequest._id, status: 'Pending' },
+    {
+      $set: { status: 'Issued', handledBy: req.user._id, handledAt },
+      $unset: { resetTokenHash: 1, resetTokenExpiresAt: 1, resetTokenUsedAt: 1 },
+    },
+    { new: true }
+  );
+  if (!claimedRequest) {
+    return res.status(409).json({ message: 'Password reset request has already been handled' });
+  }
+
+  const temporaryPassword = generateTemporaryPassword();
+  user.password = await bcrypt.hash(temporaryPassword, 10);
+  user.passwordChangedAt = handledAt;
+  user.mustChangePassword = true;
+  user.loginAttempts = 0;
+  user.lockUntil = null;
+  await user.save();
+  await recordAdminAction(
+    req,
+    'password_reset_issued',
+    'PasswordResetRequest',
+    claimedRequest._id,
+    `Temporary password issued for ${user.name} (${user.registerNumber}) after identity verification`
+  );
+  return res.status(200).json({ message: 'Temporary password issued', temporaryPassword });
+};
+
+const dismissPasswordResetRequest = async (req, res) => {
+  if (!['admin', 'super_admin'].includes(req.user.role) || req.user.isDemo === true) {
+    return res.status(403).json({ message: 'Administrator access required' });
+  }
+  if (!mongoose.isValidObjectId(req.params.id)) {
+    return res.status(400).json({ message: 'A valid password reset request ID is required' });
+  }
+  const passwordResetRequest = await PasswordResetRequest.findOne({
+    _id: req.params.id,
+    status: 'Pending',
+  });
+  if (!passwordResetRequest) {
+    return res.status(404).json({ message: 'Pending password reset request not found' });
+  }
+  const user = await User.findById(passwordResetRequest.userId).select('name registerNumber role');
+  if (!user || (req.user.role !== 'super_admin' && user.role !== 'student')) {
+    return res.status(404).json({ message: 'Pending password reset request not found' });
+  }
+
+  const handledAt = new Date();
+  const dismissedRequest = await PasswordResetRequest.findOneAndUpdate(
+    { _id: passwordResetRequest._id, status: 'Pending' },
+    {
+      $set: { status: 'Dismissed', handledBy: req.user._id, handledAt },
+      $unset: { resetTokenHash: 1, resetTokenExpiresAt: 1, resetTokenUsedAt: 1 },
+    },
+    { new: true }
+  );
+  if (!dismissedRequest) {
+    return res.status(409).json({ message: 'Password reset request has already been handled' });
+  }
+  await recordAdminAction(
+    req,
+    'password_reset_dismissed',
+    'PasswordResetRequest',
+    dismissedRequest._id,
+    `Password reset request dismissed for ${user.name} (${user.registerNumber})`
+  );
+  return res.status(200).json({ message: 'Password reset request dismissed' });
 };
 
 const getAllStudents = async (req, res) => {
@@ -656,4 +835,7 @@ module.exports = {
   updateStaffAccount,
   updateStaffAccountStatus,
   resetStaffPassword,
+  getPasswordResetRequests,
+  issuePasswordResetRequest,
+  dismissPasswordResetRequest,
 };

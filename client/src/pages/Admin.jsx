@@ -12,6 +12,7 @@ import { Link } from 'react-router-dom';
 import NotificationBell from '../components/NotificationBell';
 import Skeleton from '../components/Skeleton';
 import LoadError from '../components/LoadError';
+import RequestAttachments from '../components/RequestAttachments';
 
 export default function Admin() {
   const { logout, user } = useAuth();
@@ -28,6 +29,7 @@ export default function Admin() {
     approvedRequests: 0,
     resolvedRequests: 0,
     rejectedRequests: 0,
+    pendingPasswordResets: 0,
   });
 
   // Students Table State
@@ -132,6 +134,7 @@ export default function Admin() {
         approvedRequests: dashRes.approvedRequests || 0,
         resolvedRequests: dashRes.resolvedRequests || 0,
         rejectedRequests: dashRes.rejectedRequests || 0,
+        pendingPasswordResets: dashRes.pendingPasswordResets || 0,
       });
 
       setStudents(studentsRes.students || []);
@@ -276,6 +279,9 @@ export default function Admin() {
           <nav className="main-nav">
             <Link to="/appointments/requests">Appointment requests</Link>
             <Link to="/appointments/today">Today's schedule</Link>
+            {user?.role === 'admin' || user?.role === 'super_admin'
+              ? <Link to="/admin/password-resets">Password reset requests ({stats.pendingPasswordResets})</Link>
+              : null}
             {user?.role === 'super_admin' && user?.demo !== true ? <Link to="/admin/staff">Staff management</Link> : null}
           </nav>
           <NotificationBell />
@@ -297,7 +303,7 @@ export default function Admin() {
           {/* Stats Grid */}
           <section className="stats-grid admin-stats">
             {error ? null : loading ? (
-              <Skeleton variant="card" count={8} />
+              <Skeleton variant="card" count={9} />
             ) : (
               [
                 ['Total Students', stats.totalStudents, 'totalStudents'],
@@ -313,7 +319,12 @@ export default function Admin() {
                   <span className="stat-label">{label}</span>
                   <strong id={id}>{value}</strong>
                 </div>
-              ))
+              )).concat(user?.demo !== true && ['admin', 'super_admin'].includes(user?.role) ? [
+                <Link className="stat-card password-reset-stat" to="/admin/password-resets" key="pendingPasswordResets">
+                  <span className="stat-label">Password reset requests</span>
+                  <strong>{stats.pendingPasswordResets}</strong>
+                </Link>,
+              ] : [])
             )}
           </section>
 
@@ -661,7 +672,7 @@ export default function Admin() {
                 activities.map((act) => (
                   <li key={act._id}>
                     {formatDateTime(act.createdAt)} •{' '}
-                    <strong>{act.administratorName}</strong> •{' '}
+                    <strong>{act.actorName || act.administratorName}</strong> •{' '}
                     <span>{act.action?.replace(/_/g, ' ')}</span> •{' '}
                     <span>
                       {act.recordType} {act.recordId}
@@ -774,6 +785,7 @@ export default function Admin() {
                         'requestId',
                         'status',
                         'adminRemark',
+                        'attachments',
                       ].includes(key)
                   )
                   .map(([key, val]) => (
@@ -792,6 +804,15 @@ export default function Admin() {
                   ))}
               </div>
             </div>
+
+            <section className="admin-attachment-section" aria-labelledby="admin-attachments-title">
+              <h4 id="admin-attachments-title">Attachments</h4>
+              <RequestAttachments
+                requestType={selectedRequest.type || 'request'}
+                requestId={selectedRequest._id}
+                attachments={selectedRequest.attachments || []}
+              />
+            </section>
 
             {/* Status History Timeline */}
             <div>

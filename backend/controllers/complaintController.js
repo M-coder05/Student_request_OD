@@ -1,6 +1,7 @@
 const Complaint = require('../models/Complaint');
 const notifyUser = require('../utils/notifyUser');
 const textLengthError = require('../utils/textLengthError');
+const { createRequestWithAttachments } = require('../utils/requestAttachments');
 
 const generateRequestId = (type) => {
   const random = Math.random().toString(36).slice(2, 8).toUpperCase();
@@ -22,7 +23,7 @@ const createComplaint = async (req, res) => {
     return res.status(400).json({ message: lengthError });
   }
 
-  const complaint = await Complaint.create({
+  const complaint = await createRequestWithAttachments(Complaint, {
     studentId: req.user._id,
     studentName: req.user.name,
     registerNumber: req.user.registerNumber,
@@ -33,7 +34,7 @@ const createComplaint = async (req, res) => {
     status: 'Pending',
     adminRemark: '',
     requestId: generateRequestId('COMP'),
-  });
+  }, req.files, 'complaint');
 
   await notifyUser({
     user: req.user,

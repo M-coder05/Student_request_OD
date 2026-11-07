@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import DemoBanner from '../components/DemoBanner';
 import ButtonLoader from '../components/ButtonLoader';
+import FileUpload from '../components/FileUpload';
 
 export default function Bonafide() {
   const { user } = useAuth();
@@ -16,20 +17,30 @@ export default function Bonafide() {
     additionalDetails: '',
   });
   const [loading, setLoading] = useState(false);
+  const [attachments, setAttachments] = useState([]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
 
     try {
+      const payload = {
+        year: user?.year || 'I',
+        semester: user?.semester || '1',
+        purpose: formData.purpose,
+        additionalDetails: formData.additionalDetails,
+      };
+      const body = attachments.length
+        ? (() => {
+            const data = new FormData();
+            Object.entries(payload).forEach(([key, value]) => data.append(key, value));
+            attachments.forEach((file) => data.append('attachments', file));
+            return data;
+          })()
+        : JSON.stringify(payload);
       await apiRequest('/bonafide', {
         method: 'POST',
-        body: JSON.stringify({
-          year: user?.year || 'I',
-          semester: user?.semester || '1',
-          purpose: formData.purpose,
-          additionalDetails: formData.additionalDetails,
-        }),
+        body,
       });
 
       showToast('Bonafide request submitted successfully');
@@ -113,6 +124,14 @@ export default function Bonafide() {
               disabled={loading}
             ></textarea>
           </div>
+
+          <FileUpload
+            label="Supporting document"
+            files={attachments}
+            onFilesChange={setAttachments}
+            disabled={loading}
+            demo={user?.demo === true}
+          />
 
           <ButtonLoader
             type="submit"

@@ -19,6 +19,8 @@ const notificationRoutes = require('./routes/notificationRoutes');
 const verificationRoutes = require('./routes/verificationRoutes');
 const appointmentRoutes = require('./routes/appointmentRoutes');
 const availabilityRoutes = require('./routes/availabilityRoutes');
+const configRoutes = require('./routes/configRoutes');
+const attachmentRoutes = require('./routes/attachmentRoutes');
 const errorMiddleware = require('./middleware/errorMiddleware');
 const seedAdmin = require('./seedAdmin');
 const User = require('./models/User');
@@ -70,7 +72,7 @@ app.use(helmet({
       'style-src': ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com', 'https://cdnjs.cloudflare.com', 'https://unpkg.com'],
       'font-src': ["'self'", 'https://fonts.gstatic.com', 'https://cdnjs.cloudflare.com', 'https://unpkg.com', 'data:'],
       'img-src': ["'self'", 'data:'],
-      'connect-src': ["'self'"],
+      'connect-src': ["'self'", 'https://api.cloudinary.com'],
     },
   },
 }));
@@ -90,6 +92,8 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/verify', verificationRoutes);
 app.use('/api/appointments', appointmentRoutes);
 app.use('/api/availability', availabilityRoutes);
+app.use('/api/config', configRoutes);
+app.use('/api/attachments', attachmentRoutes);
 app.use('/api/admin', adminRoutes);
 
 app.get('/api/health', (req, res) => {

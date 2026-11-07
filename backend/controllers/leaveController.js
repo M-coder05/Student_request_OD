@@ -2,6 +2,7 @@ const LeaveRequest = require('../models/LeaveRequest');
 const parseDate = require('../utils/parseDate');
 const notifyUser = require('../utils/notifyUser');
 const textLengthError = require('../utils/textLengthError');
+const { createRequestWithAttachments } = require('../utils/requestAttachments');
 
 const generateRequestId = (type) => {
   const random = Math.random().toString(36).slice(2, 8).toUpperCase();
@@ -30,7 +31,7 @@ const createLeaveRequest = async (req, res) => {
     return res.status(400).json({ message: 'To date cannot be before from date' });
   }
 
-  const request = await LeaveRequest.create({
+  const request = await createRequestWithAttachments(LeaveRequest, {
     studentId: req.user._id,
     studentName: req.user.name,
     registerNumber: req.user.registerNumber,
@@ -41,7 +42,7 @@ const createLeaveRequest = async (req, res) => {
     status: 'Pending',
     adminRemark: '',
     requestId: generateRequestId('LEAVE'),
-  });
+  }, req.files, 'leave');
 
   await notifyUser({
     user: req.user,

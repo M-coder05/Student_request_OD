@@ -108,67 +108,76 @@ export default function BookAppointment() {
     <>
       <DemoBanner />
       <StudentHeader title="Book appointment" />
-      <main className="page-shell">
-        <div className="container">
-          <section className="card" style={{ maxWidth: 760, margin: '0 auto', padding: 24 }}>
-            <h2>Book an appointment</h2>
-            <p className="muted">Choose a Principal/HOD appointment or a faculty meeting.</p>
-            <form onSubmit={submit}>
-              <div className="form-group">
-                <label htmlFor="appointmentStaffRole">Appointment with</label>
-                <select id="appointmentStaffRole" value={staffRole} onChange={(event) => setStaffRole(event.target.value)}>
-                  <option value="faculty">Faculty</option>
-                  <option value="hod">Head of Department (HOD)</option>
-                  <option value="principal">Principal</option>
-                </select>
+      <main className="container form-page">
+        <form className="card form-card appointment-card" onSubmit={submit}>
+          <h2>Book an appointment</h2>
+          <p className="muted appointment-intro">Choose a Principal/HOD appointment or a faculty meeting.</p>
+          <div className="appointment-form">
+            <div className="field-wrap">
+              <label htmlFor="appointmentStaffRole">Appointment with</label>
+              <select id="appointmentStaffRole" value={staffRole} onChange={(event) => setStaffRole(event.target.value)}>
+                <option value="faculty">Faculty</option>
+                <option value="hod">Head of Department (HOD)</option>
+                <option value="principal">Principal</option>
+              </select>
+            </div>
+            <div className="field-wrap">
+              <label htmlFor="appointmentStaff">Staff member</label>
+              <select id="appointmentStaff" value={staffId} onChange={(event) => setStaffId(event.target.value)} disabled={loadingStaff || !staff.length}>
+                {loadingStaff ? <option value="">Loading staff…</option> : null}
+                {!loadingStaff && !staff.length ? <option value="">No staff available</option> : null}
+                {staff.map((member) => <option key={member._id} value={member._id}>{member.department ? `${member.name} (${member.department})` : member.name}</option>)}
+              </select>
+            </div>
+            <div className="field-wrap">
+              <label htmlFor="appointmentDate">Date</label>
+              <input id="appointmentDate" type="date" min={todayInKolkata()} value={date} onChange={(event) => setDate(event.target.value)} required />
+            </div>
+            <section className="field-wrap appointment-times" aria-labelledby="appointmentTimesLabel">
+              <div>
+                <h3 id="appointmentTimesLabel" className="appointment-times-label">Available times</h3>
+                <small id="appointmentTimezone" className="muted">Times are shown in Asia/Kolkata.</small>
               </div>
-              <div className="form-group">
-                <label htmlFor="appointmentStaff">Staff member</label>
-                <select id="appointmentStaff" value={staffId} onChange={(event) => setStaffId(event.target.value)} disabled={loadingStaff || !staff.length}>
-                  {loadingStaff ? <option value="">Loading staff…</option> : null}
-                  {!loadingStaff && !staff.length ? <option value="">No staff available</option> : null}
-                  {staff.map((member) => <option key={member._id} value={member._id}>{member.name} — {member.department}</option>)}
-                </select>
-              </div>
-              <div className="form-group">
-                <label htmlFor="appointmentDate">Date</label>
-                <input id="appointmentDate" type="date" min={todayInKolkata()} value={date} onChange={(event) => setDate(event.target.value)} required />
-              </div>
-              <fieldset className="form-group">
-                <legend>Available times (Asia/Kolkata)</legend>
-                {loadingSlots ? <p className="muted">Loading available slots…</p> : null}
-                {!loadingSlots && date && !slots.length ? <p className="muted">No free slots are available on this date.</p> : null}
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+              {loadingSlots ? <p className="muted appointment-times-message" role="status">Loading times...</p> : null}
+              {!loadingSlots && date && !slots.length ? <p className="muted appointment-times-message">No free times on this date. Try another day.</p> : null}
+              {!loadingSlots && slots.length ? (
+                <div className="appointment-slot-grid" role="radiogroup" aria-labelledby="appointmentTimesLabel" aria-describedby="appointmentTimezone">
                   {slots.map((slot) => (
-                    <button
-                      key={slot.startTime}
-                      type="button"
-                      className={`btn ${startTime === slot.startTime ? 'btn-primary' : 'btn-secondary'}`}
-                      onClick={() => setStartTime(slot.startTime)}
-                      aria-pressed={startTime === slot.startTime}
-                    >
-                      {slot.startTime}–{slot.endTime}
-                    </button>
+                    <label key={slot.startTime} className="appointment-slot">
+                      <input
+                        type="radio"
+                        name="appointmentTime"
+                        value={slot.startTime}
+                        checked={startTime === slot.startTime}
+                        onChange={() => setStartTime(slot.startTime)}
+                      />
+                      <span>{slot.startTime}–{slot.endTime}</span>
+                    </label>
                   ))}
                 </div>
-              </fieldset>
-              <div className="form-group">
-                <label htmlFor="appointmentPurpose">Purpose</label>
-                <textarea id="appointmentPurpose" value={purpose} onChange={(event) => setPurpose(event.target.value)} minLength={staffRole === 'principal' ? 30 : 10} maxLength={300} rows={4} required />
-                <small className="muted">{purpose.length}/300 characters{staffRole === 'principal' ? ' (minimum 30 for Principal appointments)' : ''}</small>
+              ) : null}
+            </section>
+            <div className="field-wrap appointment-purpose">
+              <label htmlFor="appointmentPurpose">Purpose</label>
+              <textarea id="appointmentPurpose" value={purpose} onChange={(event) => setPurpose(event.target.value)} minLength={staffRole === 'principal' ? 30 : 10} maxLength={300} rows={4} required aria-describedby="appointmentPurposeRules appointmentPurposeCount" />
+              <div className="appointment-purpose-meta">
+                <small id="appointmentPurposeRules" className="muted">
+                  Minimum {staffRole === 'principal' ? 30 : 10} characters; maximum 300 characters.
+                </small>
+                <small id="appointmentPurposeCount" className="appointment-purpose-count" aria-live="polite">{purpose.length}/300</small>
               </div>
-              <ButtonLoader
-                type="submit"
-                className="btn btn-primary"
-                loading={submitting}
-                disabled={!staffId || !date || !startTime}
-                loadingText="Submitting…"
-              >
-                Request appointment
-              </ButtonLoader>
-            </form>
-          </section>
-        </div>
+            </div>
+            <ButtonLoader
+              type="submit"
+              className="btn btn-primary"
+              loading={submitting}
+              disabled={!staffId || !date || !startTime}
+              loadingText="Requesting..."
+            >
+              Request appointment
+            </ButtonLoader>
+          </div>
+        </form>
       </main>
     </>
   );

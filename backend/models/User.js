@@ -16,6 +16,8 @@ const userSchema = new mongoose.Schema(
     isDemo: { type: Boolean, default: false, index: true },
     isActive: { type: Boolean, default: true },
     mustChangePassword: { type: Boolean, default: false },
+    loginAttempts: { type: Number, default: 0 },
+    lockUntil: { type: Date, default: null },
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
   },
   { timestamps: true }

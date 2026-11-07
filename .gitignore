@@ -7,4 +7,5 @@ npm-debug.log*
 client/node_modules/
 client/dist/
 backend/tmp/
+/backend/uploads/
 .vscode/

@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import DemoBanner from '../components/DemoBanner';
 import ButtonLoader from '../components/ButtonLoader';
+import FileUpload from '../components/FileUpload';
 
 export default function OD() {
   const { user } = useAuth();
@@ -19,15 +20,24 @@ export default function OD() {
     reason: '',
   });
   const [loading, setLoading] = useState(false);
+  const [attachments, setAttachments] = useState([]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
 
     try {
+      const body = attachments.length
+        ? (() => {
+            const data = new FormData();
+            Object.entries(formData).forEach(([key, value]) => data.append(key, value));
+            attachments.forEach((file) => data.append('attachments', file));
+            return data;
+          })()
+        : JSON.stringify(formData);
       await apiRequest('/od', {
         method: 'POST',
-        body: JSON.stringify(formData),
+        body,
       });
 
       showToast('On-duty request submitted successfully');
@@ -133,6 +143,14 @@ export default function OD() {
               disabled={loading}
             ></textarea>
           </div>
+
+          <FileUpload
+            label="Invitation or permission letter"
+            files={attachments}
+            onFilesChange={setAttachments}
+            disabled={loading}
+            demo={user?.demo === true}
+          />
 
           <ButtonLoader
             type="submit"

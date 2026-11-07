@@ -178,12 +178,17 @@ Smart-Student-Service-Portal/
 | `SUPER_ADMIN_PHONE` | Optional | Contact phone number for super admin | `0000000000` |
 | `CORS_ORIGIN` | Optional | Allowed CORS origin (leave empty for same-origin) | `http://localhost:3000` |
 | `FRONTEND_URL` | Optional | Frontend base URL used in notification emails | `http://localhost:3000` |
+| `PASSWORD_RESET_EMAIL` | Optional | Enables single-use password reset links by email (`true`/`false`; default `false`) | `false` |
 | `RESEND_API_KEY` | Optional | Resend API key for email notifications; omit to log email previews locally | `re_replace_with_your_resend_api_key` |
 | `MAIL_FROM` | Optional | Sender address from a domain verified with Resend | `Smart Student Service Portal <notifications@example.com>` |
 | `COLLEGE_NAME` | Optional | Institution name printed on bonafide certificates | `Your College Name` |
 | `SIGNATORY_NAME` | Optional | Name printed in the certificate signatory block | `College Principal` |
 | `SIGNATORY_TITLE` | Optional | Title printed in the certificate signatory block | `Principal` |
+| `CLOUDINARY_CLOUD_NAME` | Optional outside production | Cloudinary cloud name for private request attachments | `your-cloud-name` |
+| `CLOUDINARY_API_KEY` | Optional outside production | Cloudinary API key for server-side private uploads | `your-api-key` |
+| `CLOUDINARY_API_SECRET` | Optional outside production | Cloudinary API secret; keep it only in the server environment | `your-api-secret` |
 | `APPT_MIN_NOTICE_HOURS` | Optional | Minimum advance notice for an appointment (default: 2 hours) | `2` |
+| `APPOINTMENTS_ENABLED` | Optional | Enables appointment booking for real student accounts; defaults to `false` (demo accounts remain enabled) | `false` |
 | `APPT_MAX_ACTIVE` | Optional | Maximum active appointments per student per week (default: 2) | `2` |
 | `APPT_CANCEL_BEFORE_HOURS` | Optional | Minimum hours before start when a student may cancel (default: 2) | `2` |
 | `APPT_PENDING_EXPIRE_HOURS` | Optional | Pending appointment request age before lazy expiry (default: 72 hours) | `72` |
@@ -193,11 +198,13 @@ Smart-Student-Service-Portal/
 
 Request submissions and status changes create in-app notifications and send email through Resend when configured. `backend/utils/mailer.js` reads `RESEND_API_KEY` and `MAIL_FROM` from the environment; keep the real values in the root `.env`, not in source code. The `onboarding@resend.dev` test sender is restricted to your own Resend account email. To deliver to students, verify a domain you control in Resend, then set `MAIL_FROM` in `.env` to an address on that domain, for example `Smart Student Service Portal <notifications@your-domain.edu>`. Use the same `MAIL_FROM` setting for a local test:
 
+Service requests accept up to 3 optional attachments, each at most 5 MB, in PDF, JPG or PNG format. The server verifies each file signature and stores only private storage identifiers in MongoDB, not public URLs. Configure all three `CLOUDINARY_*` variables to use authenticated Cloudinary assets. Outside production, the server uses `backend/uploads/` when Cloudinary is not configured; this directory is git-ignored. Uploads are disabled in production unless Cloudinary is fully configured. Demo accounts cannot upload files.
+
 ```sh
 npm run test:email -- student@example.edu
 ```
 
-The test script sends one real email to the supplied address and requires both `RESEND_API_KEY` and `MAIL_FROM`. Without `RESEND_API_KEY`, normal application email previews are logged locally; demo accounts never send real email.
+The test script sends one real email to the supplied address and requires both `RESEND_API_KEY` and `MAIL_FROM`. Without `RESEND_API_KEY`, normal application email previews are logged locally; password-reset links are never included in console logs, and demo accounts never send real email.
 
 ## Database Seeding
 
@@ -218,6 +225,16 @@ Run the seed scripts to prepare your database accounts:
 Appointment staff are active `User` records with a `faculty`, `hod`, or `principal` role. A permanent **Super Admin** creates and manages real staff accounts from **Admin dashboard → Staff management**; regular admins and demo accounts cannot manage or view real staff through that page. Add each staff member's name, work email, unique employee ID, phone, role and (for faculty/HOD) department. Principal department is optional. Staff accounts do not use student year or semester fields.
 
 When an account is created, the Super Admin receives a random temporary password once. Share it with the staff member securely; it is not stored in plain text and cannot be viewed again. Staff sign in on the regular login page using their work email and temporary password, then must set a new password before accessing the portal. Staff can then configure weekly appointment slots under **My availability** and process requests from **Appointment requests**. To issue a replacement credential, the Super Admin uses **Reset password** in Staff management; the new temporary password is shown once and must be changed at the next sign-in. Disabling a staff account prevents login and removes them from new appointment bookings while preserving their existing appointments for admin review.
+
+Students and staff can use **Forgot password?** on the regular login page to submit a recovery request. Administrators review student requests under **Admin dashboard → Password reset requests**; staff requests are visible only to the Super Admin. Before issuing a temporary password, the administrator must verify the account holder's identity in person. The temporary password is shown once, shared securely, and must be changed at the next sign-in. If `PASSWORD_RESET_EMAIL=true`, active non-demo accounts can instead use the emailed, single-use link, which expires after 30 minutes. Configure `FRONTEND_URL`, `RESEND_API_KEY`, and `MAIL_FROM` to deliver reset emails; the email flow is disabled by default.
+
+The password reset integration test uses a newly generated database name and drops only that database when it finishes. Run it against a local throwaway MongoDB URI (never production):
+
+```powershell
+$env:MONGO_URI = "mongodb://127.0.0.1:27017/student_service_portal_test"
+npm run test:password-reset
+Remove-Item Env:\MONGO_URI
+```
 
 ---
 
@@ -285,23 +302,29 @@ All backend endpoints are prefixed with `/api`.
 ### Service Requests
 | Method | Endpoint | Auth Required | Permitted Roles | Purpose |
 |---|---|---|---|---|
-| `POST` | `/api/leave` | Yes (Bearer) | `student` | Submit a new academic leave request |
+| `POST` | `/api/leave` | Yes (Bearer) | `student` | Submit a leave request; multipart form data may include `attachments` |
 | `GET` | `/api/leave/my` | Yes (Bearer) | `student` | Retrieve user's leave requests |
 | `GET` | `/api/leave/:id` | Yes (Bearer) | `student` | Get details of a specific leave request |
-| `POST` | `/api/od` | Yes (Bearer) | `student` | Submit an on-duty (OD) request |
+| `DELETE` | `/api/leave/:id/attachments/:attachmentId` | Yes (Bearer) | Pending request owner | Remove an attachment while the request is Pending |
+| `POST` | `/api/od` | Yes (Bearer) | `student` | Submit an OD request; multipart form data may include `attachments` |
 | `GET` | `/api/od/my` | Yes (Bearer) | `student` | Retrieve user's OD requests |
 | `GET` | `/api/od/:id` | Yes (Bearer) | `student` | Get details of a specific OD request |
-| `POST` | `/api/bonafide` | Yes (Bearer) | `student` | Submit a bonafide certificate request |
+| `DELETE` | `/api/od/:id/attachments/:attachmentId` | Yes (Bearer) | Pending request owner | Remove an attachment while the request is Pending |
+| `POST` | `/api/bonafide` | Yes (Bearer) | `student` | Submit a bonafide request; multipart form data may include `attachments` |
 | `GET` | `/api/bonafide/my` | Yes (Bearer) | `student` | Retrieve user's bonafide requests |
 | `GET` | `/api/bonafide/:id` | Yes (Bearer) | `student` | Get details of a specific bonafide request |
-| `POST` | `/api/complaints` | Yes (Bearer) | `student` | Submit a new student complaint |
+| `DELETE` | `/api/bonafide/:id/attachments/:attachmentId` | Yes (Bearer) | Pending request owner | Remove an attachment while the request is Pending |
+| `POST` | `/api/complaints` | Yes (Bearer) | `student` | Submit a complaint; multipart form data may include `attachments` |
 | `GET` | `/api/complaints/my` | Yes (Bearer) | `student` | Retrieve user's complaints |
 | `GET` | `/api/complaints/:id` | Yes (Bearer) | `student` | Get details of a specific complaint |
+| `DELETE` | `/api/complaints/:id/attachments/:attachmentId` | Yes (Bearer) | Pending request owner | Remove an attachment while the request is Pending |
 | `GET` | `/api/requests/my` | Yes (Bearer) | `student` | Retrieve aggregated list of all user requests |
+| `GET` | `/api/attachments/:requestType/:requestId/:attachmentId` | Yes (Bearer) | Request owner, admin or super_admin | Download a private attachment; administrator downloads are audited |
 
 ### Appointments & Availability
 | Method | Endpoint | Auth Required | Permitted Roles | Purpose |
 |---|---|---|---|---|
+| `GET` | `/api/config/features` | No | Public | Return public feature flags such as appointment availability |
 | `GET` | `/api/appointments/staff?role=&department=` | Yes (Bearer) | `student` | List bookable faculty, HODs or Principals in the selected department |
 | `GET` | `/api/appointments/staff/:id/slots?date=YYYY-MM-DD` | Yes (Bearer) | `student` | List free slots in Asia/Kolkata time |
 | `POST` | `/api/appointments` | Yes (Bearer) | `student` | Request an appointment |
@@ -344,6 +367,8 @@ All backend endpoints are prefixed with `/api`.
 - **`demo_admin`**: Isolated administrator role restricted to reviewing and managing sample data in demo mode.
 
 Students can book either a faculty meeting or an appointment with their HOD/Principal using the same scheduling engine. Seeded demo staff and demo student appointments are isolated from real accounts, and demo emails are logged rather than delivered.
+
+Appointment booking is hidden and unavailable to real student accounts by default. After real staff accounts have been created and configured with availability, set `APPOINTMENTS_ENABLED=true` in the server environment and restart the server to enable it. Demo accounts remain enabled regardless of this setting. The public `GET /api/config/features` endpoint exposes the configured availability to the client; staff appointment-management routes remain available while student booking is disabled.
 
 ---
 

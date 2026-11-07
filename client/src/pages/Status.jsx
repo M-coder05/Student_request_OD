@@ -9,6 +9,7 @@ import { formatDateTime } from '../utils/formatDate';
 import Skeleton from '../components/Skeleton';
 import LoadError from '../components/LoadError';
 import useLoading from '../hooks/useLoading';
+import RequestAttachments from '../components/RequestAttachments';
 
 export default function Status() {
   const { showToast } = useToast();
@@ -155,17 +156,18 @@ export default function Status() {
                     <th>Submitted</th>
                     <th>Status</th>
                     <th>Remark</th>
+                    <th>Attachments</th>
                     <th>Certificate</th>
                   </tr>
                 </thead>
                 <tbody aria-busy={loading}>
                   {error ? (
-                    <tr><td colSpan="6"><LoadError message={error} onRetry={retry} /></td></tr>
+                    <tr><td colSpan="7"><LoadError message={error} onRetry={retry} /></td></tr>
                   ) : loading ? (
-                    <Skeleton variant="table-row" count={5} columns={6} />
+                    <Skeleton variant="table-row" count={5} columns={7} />
                   ) : filteredRequests.length === 0 ? (
                     <tr>
-                      <td colSpan="6" style={{ textAlign: 'center', padding: '24px' }}>
+                      <td colSpan="7" style={{ textAlign: 'center', padding: '24px' }}>
                         No requests found matching your filters.
                       </td>
                     </tr>
@@ -179,6 +181,13 @@ export default function Status() {
                         <td data-label="Submitted">{formatDateTime(item.createdAt)}</td>
                         <td data-label="Status"><StatusBadge status={item.status} /></td>
                         <td data-label="Remark">{item.adminRemark || 'No remarks yet'}</td>
+                        <td data-label="Attachments">
+                          <RequestAttachments
+                            requestType={item.type || item.requestType || 'request'}
+                            requestId={item._id}
+                            attachments={item.attachments || []}
+                          />
+                        </td>
                         <td data-label="Certificate">
                           {item.type === 'Bonafide' && item.status === 'Approved' && !item.revoked ? (
                             <button

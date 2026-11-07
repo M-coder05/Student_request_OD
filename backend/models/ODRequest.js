@@ -1,5 +1,23 @@
 const mongoose = require('mongoose');
 
+const hideStorageKey = (document, value) => {
+  delete value.storageKey;
+  return value;
+};
+
+const attachmentSchema = new mongoose.Schema({
+  originalName: { type: String, required: true, maxlength: 120 },
+  mimeType: { type: String, enum: ['application/pdf', 'image/jpeg', 'image/png'], required: true },
+  size: { type: Number, required: true, min: 1, max: 5 * 1024 * 1024 },
+  storageKey: { type: String, required: true, select: false },
+  uploadedAt: { type: Date, required: true },
+}, {
+  toObject: { transform: hideStorageKey },
+  toJSON: {
+    transform: hideStorageKey,
+  },
+});
+
 const odRequestSchema = new mongoose.Schema(
   {
     studentId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
@@ -26,6 +44,7 @@ const odRequestSchema = new mongoose.Schema(
       changedAt: { type: Date, default: Date.now },
       remark: { type: String, default: '' },
     }],
+    attachments: { type: [attachmentSchema], default: undefined },
   },
   { timestamps: true }
 );

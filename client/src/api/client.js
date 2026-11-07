@@ -19,8 +19,9 @@ export function subscribeToInitialRequest(listener) {
 
 export async function apiRequest(endpoint, options = {}) {
   const token = localStorage.getItem('token');
+  const isFormData = typeof FormData !== 'undefined' && options.body instanceof FormData;
   const headers = {
-    'Content-Type': 'application/json',
+    ...(!isFormData ? { 'Content-Type': 'application/json' } : {}),
     ...(options.headers || {}),
   };
 

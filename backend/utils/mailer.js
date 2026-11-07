@@ -1,8 +1,8 @@
-const sendMail = async ({ to, subject, html, text, isDemo = false }) => {
+const sendMail = async ({ to, subject, html, text, isDemo = false, sensitive = false }) => {
   const apiKey = process.env.RESEND_API_KEY;
 
   if (!apiKey || isDemo) {
-    console.info('[email] Email logged instead of sent', { to, subject, text });
+    console.info('[email] Email logged instead of sent', sensitive ? { to, subject } : { to, subject, text });
     return { sent: false };
   }
 
@@ -38,6 +38,9 @@ const sendMail = async ({ to, subject, html, text, isDemo = false }) => {
   }
 
   if (!response.ok) {
+    if (sensitive) {
+      throw new Error(`Sensitive email delivery failed with status ${response.status}`);
+    }
     const detail = typeof result?.message === 'string' && result.message.trim()
       ? `: ${result.message}`
       : '';

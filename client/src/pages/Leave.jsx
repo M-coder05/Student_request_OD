@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import DemoBanner from '../components/DemoBanner';
 import ButtonLoader from '../components/ButtonLoader';
+import FileUpload from '../components/FileUpload';
 
 export default function Leave() {
   const { user } = useAuth();
@@ -17,15 +18,24 @@ export default function Leave() {
     reason: '',
   });
   const [loading, setLoading] = useState(false);
+  const [attachments, setAttachments] = useState([]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
 
     try {
+      const body = attachments.length
+        ? (() => {
+            const data = new FormData();
+            Object.entries(formData).forEach(([key, value]) => data.append(key, value));
+            attachments.forEach((file) => data.append('attachments', file));
+            return data;
+          })()
+        : JSON.stringify(formData);
       await apiRequest('/leave', {
         method: 'POST',
-        body: JSON.stringify(formData),
+        body,
       });
 
       showToast('Leave request submitted successfully');
@@ -105,6 +115,14 @@ export default function Leave() {
               disabled={loading}
             ></textarea>
           </div>
+
+          <FileUpload
+            label="Medical certificate or proof"
+            files={attachments}
+            onFilesChange={setAttachments}
+            disabled={loading}
+            demo={user?.demo === true}
+          />
 
           <ButtonLoader
             type="submit"

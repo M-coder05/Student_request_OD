@@ -7,9 +7,11 @@ import DemoBanner from '../components/DemoBanner';
 import Skeleton from '../components/Skeleton';
 import LoadError from '../components/LoadError';
 import useLoading from '../hooks/useLoading';
+import { useFeatures } from '../context/FeatureContext';
 
 export default function Dashboard() {
   const { user } = useAuth();
+  const { appointmentsEnabled } = useFeatures();
   const isStaff = ['faculty', 'hod', 'principal'].includes(user?.role);
   const staffServices = [
     {
@@ -33,8 +35,10 @@ export default function Dashboard() {
     { href: '/od', title: 'Apply for on-duty', description: 'Request approval for an official event.' },
     { href: '/bonafide', title: 'Bonafide certificate', description: 'Request an official student document.' },
     { href: '/complaint', title: 'Submit a complaint', description: 'Send a concern to the reviewing team.' },
-    { href: '/appointments/book', title: 'Book an appointment', description: 'Meet with your Principal, HOD or faculty.' },
-    { href: '/appointments', title: 'My appointments', description: 'Review requests and approved events.' },
+    ...(appointmentsEnabled ? [
+      { href: '/appointments/book', title: 'Book an appointment', description: 'Meet with your Principal, HOD or faculty.' },
+      { href: '/appointments', title: 'My appointments', description: 'Review requests and approved events.' },
+    ] : []),
     { href: '/status', title: 'Track requests', description: 'Check the latest status of submitted requests.' },
     { href: '/profile', title: 'My profile', description: 'View and update your student details.' },
   ];

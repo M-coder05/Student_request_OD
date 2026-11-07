@@ -2,9 +2,12 @@ const mongoose = require('mongoose');
 
 const auditLogSchema = new mongoose.Schema(
   {
-    administratorId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-    administratorName: { type: String, required: true },
-    administratorRole: { type: String, required: true },
+    administratorId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    administratorName: { type: String },
+    administratorRole: { type: String },
+    actorId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+    actorName: { type: String, default: '' },
+    actorRole: { type: String, default: '' },
     action: { type: String, required: true },
     recordType: { type: String, required: true },
     recordId: { type: mongoose.Schema.Types.ObjectId, required: true },

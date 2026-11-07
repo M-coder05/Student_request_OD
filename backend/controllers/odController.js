@@ -2,6 +2,7 @@ const ODRequest = require('../models/ODRequest');
 const parseDate = require('../utils/parseDate');
 const notifyUser = require('../utils/notifyUser');
 const textLengthError = require('../utils/textLengthError');
+const { createRequestWithAttachments } = require('../utils/requestAttachments');
 
 const generateRequestId = (type) => {
   const random = Math.random().toString(36).slice(2, 8).toUpperCase();
@@ -29,7 +30,7 @@ const createODRequest = async (req, res) => {
     return res.status(400).json({ message: 'Please provide a valid event date' });
   }
 
-  const request = await ODRequest.create({
+  const request = await createRequestWithAttachments(ODRequest, {
     studentId: req.user._id,
     studentName: req.user.name,
     registerNumber: req.user.registerNumber,
@@ -42,7 +43,7 @@ const createODRequest = async (req, res) => {
     status: 'Pending',
     adminRemark: '',
     requestId: generateRequestId('OD'),
-  });
+  }, req.files, 'od');
 
   await notifyUser({
     user: req.user,
