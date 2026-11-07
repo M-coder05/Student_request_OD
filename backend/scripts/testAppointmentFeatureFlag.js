@@ -67,16 +67,19 @@ const main = async () => {
     console.log('PASS 2: Public feature endpoint reports appointments enabled when configured.');
 
     process.env.APPOINTMENTS_ENABLED = 'false';
-    for (const path of ['/api/appointments/staff', '/api/appointments']) {
+    for (const path of ['/api/appointments/staff', '/api/appointments', '/api/appointments/staff/staff-real/slots?date=2030-01-01']) {
       const options = path.endsWith('/staff') ? {} : { method: 'POST', body: JSON.stringify({}) };
+      if (path.includes('/slots?')) Object.assign(options, { method: 'GET', body: undefined });
       response = await request(path, 'real', options);
       assert.equal(response.status, 403);
       assert.equal(response.body.message, 'Appointment booking is not enabled');
     }
-    console.log('PASS 3: Disabled real student staff-list and booking requests return the required 403.');
+    console.log('PASS 3: Disabled real student staff-list, available-slots and booking requests return the required 403.');
 
     response = await request('/api/appointments/staff', 'demo');
     assert.equal(response.status, 200);
+    response = await request('/api/appointments/staff/staff-real/slots?date=2030-01-01', 'demo');
+    assert.notEqual(response.status, 403);
     response = await request('/api/appointments', 'demo', { method: 'POST', body: JSON.stringify({}) });
     assert.equal(response.status, 400);
     assert.notEqual(response.body.message, 'Appointment booking is not enabled');

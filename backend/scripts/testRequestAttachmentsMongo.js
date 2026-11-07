@@ -46,6 +46,8 @@ app.use('/api/leave', require('../routes/leaveRoutes'));
 app.use('/api/od', require('../routes/odRoutes'));
 app.use('/api/bonafide', require('../routes/bonafideRoutes'));
 app.use('/api/complaints', require('../routes/complaintRoutes'));
+app.use('/api/requests', require('../routes/requestsRoutes'));
+app.use('/api/student', require('../routes/studentRoutes'));
 app.use('/api/attachments', require('../routes/attachmentRoutes'));
 app.use(require('../middleware/errorMiddleware'));
 
@@ -126,12 +128,16 @@ const main = async () => {
   let server;
   try {
     await mongoose.connect(databaseUri, { serverSelectionTimeoutMS: 5000 });
-    const [owner, otherStudent, admin, demoStudent, demoAdmin] = await Promise.all([
+    const [owner, otherStudent, admin, demoStudent, demoAdmin, faculty, hod, principal, superAdmin] = await Promise.all([
       createUser(1),
       createUser(2),
       createUser(3, 'admin'),
       createUser(4, 'student', true),
       createUser(5, 'demo_admin', true),
+      createUser(6, 'faculty'),
+      createUser(7, 'hod'),
+      createUser(8, 'principal'),
+      createUser(9, 'super_admin'),
     ]);
     server = app.listen(0);
     await new Promise((resolve, reject) => {
@@ -144,6 +150,65 @@ const main = async () => {
     const adminToken = tokenFor(admin);
     const demoStudentToken = tokenFor(demoStudent);
     const demoAdminToken = tokenFor(demoAdmin);
+    const roleTokens = {
+      faculty: tokenFor(faculty),
+      hod: tokenFor(hod),
+      principal: tokenFor(principal),
+      admin: adminToken,
+      'super admin': tokenFor(superAdmin),
+    };
+
+    const studentOnlyReadEndpoints = [
+      '/api/leave/my',
+      '/api/leave/not-a-valid-id',
+      '/api/od/my',
+      '/api/od/not-a-valid-id',
+      '/api/bonafide/my',
+      '/api/bonafide/not-a-valid-id',
+      '/api/bonafide/not-a-valid-id/certificate',
+      '/api/complaints/my',
+      '/api/complaints/not-a-valid-id',
+      '/api/requests/my',
+      '/api/student/dashboard',
+      '/api/student/profile',
+    ];
+    const studentOnlyPostEndpoints = [
+      '/api/leave',
+      '/api/od',
+      '/api/bonafide',
+      '/api/complaints',
+    ];
+    for (const [role, token] of Object.entries(roleTokens)) {
+      for (const endpoint of studentOnlyReadEndpoints) {
+        const response = await request(baseUrl, token, endpoint);
+        assert.equal(response.status, 403, `${role} should not read ${endpoint}`);
+      }
+      for (const endpoint of studentOnlyPostEndpoints) {
+        const response = await request(baseUrl, token, endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: '{}',
+        });
+        assert.equal(response.status, 403, `${role} should not post to ${endpoint}`);
+      }
+      const uploadForm = new FormData();
+      appendLeaveFields(uploadForm);
+      appendFile(uploadForm, 'blocked.pdf', bufferFor.pdf, 'application/pdf');
+      const blockedUpload = await request(baseUrl, token, '/api/leave', {
+        method: 'POST',
+        body: uploadForm,
+      });
+      assert.equal(blockedUpload.status, 403, `${role} should not upload request attachments`);
+      const profileUpdate = await request(baseUrl, token, '/api/student/profile', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: '{}',
+      });
+      assert.equal(profileUpdate.status, 403, `${role} should not update a student profile`);
+    }
+    const demoRequests = await request(baseUrl, demoStudentToken, '/api/requests/my');
+    assert.equal(demoRequests.status, 200);
+    pass('faculty, HOD, principal, admin and super admin are denied student-only request/profile routes; demo students retain access');
 
     const validForm = new FormData();
     appendLeaveFields(validForm);
@@ -231,8 +296,9 @@ const main = async () => {
     assert.equal(ownerDownload.status, 200);
     assert.equal(ownerDownload.headers.get('cache-control'), 'no-store');
     assert.equal(ownerDownload.headers.get('content-type'), 'application/pdf');
+    assert.match(ownerDownload.headers.get('content-disposition'), /^attachment;/i);
     assert.deepEqual(Buffer.from(await ownerDownload.arrayBuffer()), bufferFor.pdf);
-    pass('request owner can download an attachment');
+    pass('request owner can download an attachment with Content-Disposition: attachment');
 
     const otherDownload = await request(baseUrl, otherToken, attachmentEndpoint);
     assert.equal(otherDownload.status, 404);
@@ -246,6 +312,17 @@ const main = async () => {
       recordId: validData.request._id,
     }), 1);
     pass('admin can download and the download is audited');
+
+    for (const [role, token] of Object.entries(roleTokens).filter(([role]) => !['admin', 'super admin'].includes(role))) {
+      const response = await request(baseUrl, token, attachmentEndpoint);
+      assert.equal(response.status, 403, `${role} must not download another account's attachment`);
+    }
+    for (const token of [roleTokens.admin, roleTokens['super admin']]) {
+      const response = await request(baseUrl, token, attachmentEndpoint);
+      assert.equal(response.status, 200);
+      assert.match(response.headers.get('content-disposition'), /^attachment;/i);
+    }
+    pass('staff cannot download attachments; admin and super admin downloads remain allowed');
 
     const demoRequest = await createRequestWithAttachments(
       LeaveRequest,
@@ -273,6 +350,30 @@ const main = async () => {
     assert.equal(demoUpload.status, 403);
     assert.equal((await demoUpload.json()).message, 'Uploads are turned off in demo mode.');
     pass('demo upload is blocked with the specified message');
+
+    const forgedBonafide = await request(baseUrl, ownerToken, '/api/bonafide', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ purpose: 'Scholarship', year: '99', semester: '99' }),
+    });
+    assert.equal(forgedBonafide.status, 201);
+    const forgedBonafideBody = await forgedBonafide.json();
+    const savedBonafide = await require('../models/BonafideRequest').findById(forgedBonafideBody.request._id);
+    assert.equal(savedBonafide.year, owner.year);
+    assert.equal(savedBonafide.semester, owner.semester);
+    const invalidPurpose = await request(baseUrl, ownerToken, '/api/bonafide', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ purpose: 'Forged purpose', year: '1', semester: '1' }),
+    });
+    assert.equal(invalidPurpose.status, 400);
+    const invalidCategory = await request(baseUrl, ownerToken, '/api/complaints', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ category: 'Forged category', subject: 'Test', description: 'Test' }),
+    });
+    assert.equal(invalidCategory.status, 400);
+    pass('bonafide year/semester come from the account; invalid purpose and complaint category are rejected');
 
     const pending = await createRequestWithAttachments(
       LeaveRequest,
@@ -332,6 +433,25 @@ const main = async () => {
     assert.deepEqual(await listFiles(uploadRoot), filesBeforeFailedCreate);
     pass('uploaded files are removed when request creation fails');
 
+    const originalNodeEnv = process.env.NODE_ENV;
+    try {
+      process.env.NODE_ENV = 'production';
+      const filesBeforeProductionUpload = await listFiles(uploadRoot);
+      const productionForm = new FormData();
+      appendLeaveFields(productionForm);
+      appendFile(productionForm, 'production.pdf', bufferFor.pdf, 'application/pdf');
+      const productionUpload = await request(baseUrl, ownerToken, '/api/leave', {
+        method: 'POST',
+        body: productionForm,
+      });
+      assert.equal(productionUpload.status, 503);
+      assert.deepEqual(await listFiles(uploadRoot), filesBeforeProductionUpload);
+      pass('production upload without Cloudinary returns 503 and writes nothing to disk');
+    } finally {
+      if (originalNodeEnv === undefined) delete process.env.NODE_ENV;
+      else process.env.NODE_ENV = originalNodeEnv;
+    }
+
     let rateLimited = false;
     for (let index = 0; index < 25; index += 1) {
       const response = await request(baseUrl, ownerToken, '/api/leave', {
@@ -353,6 +473,7 @@ const main = async () => {
       await new Promise((resolve) => server.close(resolve));
     }
     if (mongoose.connection.readyState) {
+      if (process.env.NODE_ENV === 'production') process.env.NODE_ENV = 'test';
       const requestModels = [LeaveRequest];
       for (const Model of requestModels) {
         const records = await Model.find({}).select('+attachments.storageKey').catch(() => []);

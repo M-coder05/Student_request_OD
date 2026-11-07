@@ -22,6 +22,7 @@ const availabilityRoutes = require('./routes/availabilityRoutes');
 const configRoutes = require('./routes/configRoutes');
 const attachmentRoutes = require('./routes/attachmentRoutes');
 const errorMiddleware = require('./middleware/errorMiddleware');
+const safeRequestUrl = require('./utils/safeRequestUrl');
 const seedAdmin = require('./seedAdmin');
 const User = require('./models/User');
 const {
@@ -79,7 +80,8 @@ app.use(helmet({
 app.use(cors({ origin: process.env.CORS_ORIGIN || false }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(morgan('dev'));
+morgan.token('safe-url', safeRequestUrl);
+app.use(morgan(':method :safe-url :status :response-time ms'));
 
 app.use('/api/auth', authRoutes);
 app.use('/api/student', studentRoutes);

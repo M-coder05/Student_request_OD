@@ -45,17 +45,25 @@ const replaceMyAvailability = async (req, res) => {
     seenWeekdays.add(entry.weekday);
   }
 
-  await Availability.deleteMany({ staffId: req.user._id });
-  const availability = entries.length
-    ? await Availability.insertMany(entries.map((entry) => ({
-      staffId: req.user._id,
-      weekday: entry.weekday,
-      startTime: entry.startTime,
-      endTime: entry.endTime,
-      slotMinutes: Number(entry.slotMinutes),
-      active: entry.active,
-    })))
-    : [];
+  const session = await mongoose.startSession();
+  let availability = [];
+  try {
+    await session.withTransaction(async () => {
+      await Availability.deleteMany({ staffId: req.user._id }, { session });
+      if (entries.length) {
+      availability = await Availability.insertMany(entries.map((entry) => ({
+        staffId: req.user._id,
+        weekday: entry.weekday,
+        startTime: entry.startTime,
+        endTime: entry.endTime,
+        slotMinutes: Number(entry.slotMinutes),
+        active: entry.active,
+      })), { session });
+      }
+    });
+  } finally {
+    await session.endSession();
+  }
   return res.status(200).json({ availability });
 };
 

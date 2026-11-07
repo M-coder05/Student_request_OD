@@ -1,5 +1,6 @@
 const express = require('express');
 const authMiddleware = require('../middleware/authMiddleware');
+const requireRole = require('../middleware/requireRole');
 const LeaveRequest = require('../models/LeaveRequest');
 const ODRequest = require('../models/ODRequest');
 const BonafideRequest = require('../models/BonafideRequest');
@@ -7,7 +8,7 @@ const Complaint = require('../models/Complaint');
 
 const router = express.Router();
 
-router.use(authMiddleware);
+router.use(authMiddleware, requireRole('student'));
 
 router.get('/my', async (req, res) => {
   const [leaves, ods, bonafides, complaints] = await Promise.all([

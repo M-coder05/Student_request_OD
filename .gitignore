@@ -9,3 +9,5 @@ client/dist/
 backend/tmp/
 /backend/uploads/
 .vscode/
+playwright-report/
+test-results/

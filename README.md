@@ -156,6 +156,7 @@ Smart-Student-Service-Portal/
    cp .env.example .env
    ```
    Open `.env` and fill in your connection string and security keys.
+   Set `FRONTEND_URL=http://localhost:3000` for local password-reset and notification links.
 
 ---
 
@@ -177,7 +178,7 @@ Smart-Student-Service-Portal/
 | `SUPER_ADMIN_PASSWORD` | **Required** | Password for permanent super admin (min 12 chars) | `your_secure_password_123` |
 | `SUPER_ADMIN_PHONE` | Optional | Contact phone number for super admin | `0000000000` |
 | `CORS_ORIGIN` | Optional | Allowed CORS origin (leave empty for same-origin) | `http://localhost:3000` |
-| `FRONTEND_URL` | Optional | Frontend base URL used in notification emails | `http://localhost:3000` |
+| `FRONTEND_URL` | Optional | Frontend base URL used in notification emails and password-reset links (defaults to the Vite dev server at `http://localhost:3000`) | `http://localhost:3000` |
 | `PASSWORD_RESET_EMAIL` | Optional | Enables single-use password reset links by email (`true`/`false`; default `false`) | `false` |
 | `RESEND_API_KEY` | Optional | Resend API key for email notifications; omit to log email previews locally | `re_replace_with_your_resend_api_key` |
 | `MAIL_FROM` | Optional | Sender address from a domain verified with Resend | `Smart Student Service Portal <notifications@example.com>` |
@@ -228,12 +229,17 @@ When an account is created, the Super Admin receives a random temporary password
 
 Students and staff can use **Forgot password?** on the regular login page to submit a recovery request. Administrators review student requests under **Admin dashboard → Password reset requests**; staff requests are visible only to the Super Admin. Before issuing a temporary password, the administrator must verify the account holder's identity in person. The temporary password is shown once, shared securely, and must be changed at the next sign-in. If `PASSWORD_RESET_EMAIL=true`, active non-demo accounts can instead use the emailed, single-use link, which expires after 30 minutes. Configure `FRONTEND_URL`, `RESEND_API_KEY`, and `MAIL_FROM` to deliver reset emails; the email flow is disabled by default.
 
-The password reset integration test uses a newly generated database name and drops only that database when it finishes. Run it against a local throwaway MongoDB URI (never production):
+The MongoDB integration tests use a newly generated database name and drop only that database when each test finishes. They refuse to run with `NODE_ENV=production` and require `TEST_MONGO_URI`; use a local throwaway MongoDB server, never production:
 
 ```powershell
-$env:MONGO_URI = "mongodb://127.0.0.1:27017/student_service_portal_test"
+$env:NODE_ENV = "test"
+$env:TEST_MONGO_URI = "mongodb://127.0.0.1:27017/student_service_portal_test"
 npm run test:password-reset
-Remove-Item Env:\MONGO_URI
+npm run test:request-attachments
+node backend/scripts/testAppointmentsMongo.js
+node backend/scripts/testStaffManagementMongo.js
+Remove-Item Env:\TEST_MONGO_URI
+Remove-Item Env:\NODE_ENV
 ```
 
 ---

@@ -1,15 +1,26 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { apiRequest } from '../api/client';
 import PasswordInput from '../components/PasswordInput';
 
 export default function ResetPassword() {
-  const { token } = useParams();
+  const { token: legacyToken } = useParams();
   const navigate = useNavigate();
+  const [token, setToken] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (legacyToken) return;
+    const hash = new URLSearchParams(window.location.hash.slice(1));
+    const resetToken = hash.get('token');
+    if (resetToken) setToken(resetToken);
+    if (window.location.hash) {
+      window.history.replaceState(window.history.state, '', `${window.location.pathname}${window.location.search}`);
+    }
+  }, [legacyToken]);
 
   const submit = async (event) => {
     event.preventDefault();
@@ -37,7 +48,11 @@ export default function ResetPassword() {
       <section className="auth-panel auth-panel-form" aria-labelledby="reset-password-title">
         <span className="auth-panel-kicker">ACCOUNT RECOVERY</span>
         <h1 id="reset-password-title">Choose a new password</h1>
-        <form className="auth-form" onSubmit={submit}>
+        {legacyToken ? (
+          <p role="alert">This password reset link has expired. Request a new one.</p>
+        ) : !token ? (
+          <p role="alert">This password reset link has expired. Request a new one.</p>
+        ) : <form className="auth-form" onSubmit={submit}>
           <div className="field-wrap">
             <label htmlFor="reset-new-password">New password</label>
             <PasswordInput
@@ -72,7 +87,7 @@ export default function ResetPassword() {
           <button type="submit" className="btn btn-primary full-width" disabled={submitting}>
             {submitting ? 'Updating…' : 'Reset password'}
           </button>
-        </form>
+        </form>}
         <p className="auth-link"><Link to="/login">Back to login</Link></p>
       </section>
     </main>

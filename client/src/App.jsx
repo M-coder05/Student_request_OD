@@ -55,6 +55,7 @@ export default function App() {
                 <Route path="/verify/:code" element={<VerifyCertificate />} />
                 <Route path="/set-password" element={<SetPassword />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/reset-password/:token" element={<ResetPassword />} />
 
                 {/* Protected Student Routes */}

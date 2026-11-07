@@ -24,7 +24,11 @@ const complaintSchema = new mongoose.Schema(
     studentName: { type: String, required: true },
     registerNumber: { type: String, required: true },
     department: { type: String, required: true },
-    category: { type: String, required: true },
+    category: {
+      type: String,
+      enum: ['Classroom', 'Transport', 'Hostel', 'Library', 'Laboratory', 'Canteen', 'Infrastructure', 'Others'],
+      required: true,
+    },
     subject: { type: String, required: true, maxlength: 200 },
     description: { type: String, required: true, maxlength: 1000 },
     status: {

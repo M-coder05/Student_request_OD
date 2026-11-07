@@ -7,16 +7,22 @@ const { isDemoUser } = require('../config/demo');
 const textLengthError = require('../utils/textLengthError');
 const { createRequestWithAttachments } = require('../utils/requestAttachments');
 
+const BONAFIDE_PURPOSES = ['Scholarship', 'Bank Loan', 'Passport', 'Internship', 'Higher Education', 'Bus Pass', 'Other'];
+
 const generateRequestId = (type) => {
   const random = Math.random().toString(36).slice(2, 8).toUpperCase();
   return `${type}-${Date.now().toString().slice(-6)}-${random}`;
 };
 
 const createBonafideRequest = async (req, res) => {
-  const { year, semester, purpose, additionalDetails } = req.body;
+  const { purpose, additionalDetails } = req.body || {};
+  const { year, semester } = req.user;
 
   if (!year || !semester || !purpose) {
     return res.status(400).json({ message: 'Please provide year, semester and purpose' });
+  }
+  if (!BONAFIDE_PURPOSES.includes(purpose)) {
+    return res.status(400).json({ message: 'Please provide a valid purpose' });
   }
 
   const lengthError = textLengthError([

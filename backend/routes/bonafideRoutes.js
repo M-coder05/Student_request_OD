@@ -1,5 +1,6 @@
 const express = require('express');
 const authMiddleware = require('../middleware/authMiddleware');
+const requireRole = require('../middleware/requireRole');
 const { deleteRequestAttachment } = require('../controllers/attachmentController');
 const {
   parseRequestAttachments,
@@ -16,7 +17,7 @@ const {
 
 const router = express.Router();
 
-router.use(authMiddleware);
+router.use(authMiddleware, requireRole('student'));
 router.post('/', uploadRateLimit, requireUploadAvailable, parseRequestAttachments, validateRequestAttachments, createBonafideRequest);
 router.get('/my', getMyBonafideRequests);
 router.delete('/:id/attachments/:attachmentId', deleteRequestAttachment('bonafide'));

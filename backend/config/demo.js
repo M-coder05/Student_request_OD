@@ -1,5 +1,6 @@
 const DEMO_STUDENT_EMAIL = 'student.demo@example.com';
 const DEMO_ADMIN_EMAIL = 'admin.demo@example.com';
+const DEMO_FACULTY_EMAIL = 'faculty.demo@example.com';
 
 const getDemoAccounts = () => ({
   student: {
@@ -11,6 +12,11 @@ const getDemoAccounts = () => ({
     email: DEMO_ADMIN_EMAIL,
     password: process.env.DEMO_ADMIN_PASSWORD,
     role: 'demo_admin',
+  },
+  faculty: {
+    email: DEMO_FACULTY_EMAIL,
+    password: process.env.DEMO_FACULTY_PASSWORD || process.env.DEMO_ADMIN_PASSWORD,
+    role: 'faculty',
   },
 });
 
@@ -26,6 +32,7 @@ const isDemoUser = (user) => Boolean(user && user.isDemo === true);
 module.exports = {
   DEMO_STUDENT_EMAIL,
   DEMO_ADMIN_EMAIL,
+  DEMO_FACULTY_EMAIL,
   getDemoAccounts,
   hasDemoCredentials,
   isDemoModeEnabled,

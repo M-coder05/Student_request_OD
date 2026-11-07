@@ -17,7 +17,7 @@ const router = express.Router();
 
 router.use(authMiddleware);
 router.get('/staff', requireAppointmentsEnabledForRealStudents, getBookableStaff);
-router.get('/staff/:id/slots', getAvailableSlots);
+router.get('/staff/:id/slots', requireAppointmentsEnabledForRealStudents, getAvailableSlots);
 router.post('/', requireAppointmentsEnabledForRealStudents, createAppointment);
 router.get('/mine', getMyAppointments);
 router.patch('/:id/cancel', cancelAppointment);

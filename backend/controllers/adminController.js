@@ -12,11 +12,11 @@ const notifyUser = require('../utils/notifyUser');
 const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const generateTemporaryPassword = require('../utils/generateTemporaryPassword');
+const isValidEmail = require('../utils/isValidEmail');
 
 const isDemoAdmin = (user) => user.role === 'demo_admin' && user.isDemo === true;
 const STAFF_ROLES = ['faculty', 'hod', 'principal'];
 const isDuplicateKey = (error) => error?.code === 11000;
-const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 const validateStaffFields = (fields, { partial = false } = {}) => {
   const clean = {};
   const stringFields = ['name', 'employeeId', 'phone', 'role'];

@@ -87,6 +87,8 @@ export default function DemoLogin({
 
       if (role === 'admin') {
         navigate('/admin');
+      } else if (role === 'faculty') {
+        navigate('/appointments/requests');
       } else {
         navigate('/dashboard');
       }
@@ -99,6 +101,7 @@ export default function DemoLogin({
 
   const studentAvailable = Boolean(config?.enabled && config?.roles?.student?.available);
   const adminAvailable = Boolean(config?.enabled && config?.roles?.admin?.available);
+  const facultyAvailable = Boolean(config?.enabled && config?.roles?.faculty?.available);
 
   return (
     <section className="demo-access-card" aria-labelledby="demo-access-title">
@@ -165,6 +168,31 @@ export default function DemoLogin({
               onClick={() => handleDemoLogin('admin')}
             >
               {busyRole === 'admin' ? 'Signing in…' : 'Login as Admin Demo'}
+            </button>
+          </article>
+        )}
+
+        {roleFilter === 'all' && (
+          <article className="demo-account">
+            <div>
+              <strong>Faculty demo</strong>
+              <span>
+                Email{' '}
+                <code>
+                  {loadingConfig
+                    ? 'Checking…'
+                    : config?.roles?.faculty?.email || 'Unavailable'}
+                </code>
+              </span>
+              <span>Sample account — changes may reset</span>
+            </div>
+            <button
+              className="btn btn-secondary"
+              type="button"
+              disabled={loadingConfig || !facultyAvailable || Boolean(busyRole)}
+              onClick={() => handleDemoLogin('faculty')}
+            >
+              {busyRole === 'faculty' ? 'Signing in…' : 'Login as Faculty Demo'}
             </button>
           </article>
         )}

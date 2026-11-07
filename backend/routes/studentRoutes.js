@@ -1,6 +1,7 @@
 const express = require('express');
 const { rateLimit } = require('express-rate-limit');
 const authMiddleware = require('../middleware/authMiddleware');
+const requireRole = require('../middleware/requireRole');
 const {
   getStudentProfile,
   updateStudentProfile,
@@ -19,9 +20,9 @@ const changePasswordRateLimit = rateLimit({
 });
 
 router.use(authMiddleware);
-router.get('/profile', getStudentProfile);
-router.put('/profile', updateStudentProfile);
+router.get('/profile', requireRole('student'), getStudentProfile);
+router.put('/profile', requireRole('student'), updateStudentProfile);
 router.put('/change-password', changePasswordRateLimit, changePassword);
-router.get('/dashboard', getDashboardData);
+router.get('/dashboard', requireRole('student'), getDashboardData);
 
 module.exports = router;

@@ -7,8 +7,7 @@ const BonafideRequest = require('../models/BonafideRequest');
 const Complaint = require('../models/Complaint');
 const { isDemoUser } = require('../config/demo');
 const getRequestStatusCounts = require('../utils/requestStats');
-
-const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+const isValidEmail = require('../utils/isValidEmail');
 
 const serializeUser = (user) => ({
   id: user._id,

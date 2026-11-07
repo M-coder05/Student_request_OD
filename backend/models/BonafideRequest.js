@@ -26,7 +26,11 @@ const bonafideRequestSchema = new mongoose.Schema(
     department: { type: String, required: true },
     year: { type: String, required: true },
     semester: { type: String, required: true },
-    purpose: { type: String, required: true, maxlength: 200 },
+    purpose: {
+      type: String,
+      enum: ['Scholarship', 'Bank Loan', 'Passport', 'Internship', 'Higher Education', 'Bus Pass', 'Other'],
+      required: true,
+    },
     additionalDetails: { type: String, default: '', maxlength: 1000 },
     status: {
       type: String,

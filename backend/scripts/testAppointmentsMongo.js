@@ -1,4 +1,7 @@
-require('dotenv').config();
+if (process.env.NODE_ENV === 'production') {
+  throw new Error('Refusing to run the appointments integration test with NODE_ENV=production');
+}
+
 require('express-async-errors');
 const assert = require('node:assert/strict');
 const crypto = require('crypto');
@@ -12,8 +15,8 @@ const { addDays, todayInKolkata, weekdayForDate } = require('../utils/appointmen
 const { ensureAppointmentIndexes } = require('../config/db');
 
 const setupTestDatabase = () => {
-  const configuredUri = process.env.MONGO_URI;
-  assert.ok(configuredUri, 'MONGO_URI must be configured in the process environment or .env file');
+  const configuredUri = process.env.TEST_MONGO_URI;
+  assert.ok(configuredUri, 'Set TEST_MONGO_URI to a disposable MongoDB server to run this integration test');
   const uri = new URL(configuredUri);
   assert.ok(['mongodb:', 'mongodb+srv:'].includes(uri.protocol), 'MONGO_URI must be a MongoDB URI');
   const originalDatabaseName = decodeURIComponent(uri.pathname.replace(/^\/+/, '')) || 'student_service_portal';
@@ -43,6 +46,7 @@ process.env.APPT_MAX_ACTIVE = '2';
 process.env.APPT_CANCEL_BEFORE_HOURS = '2';
 process.env.APPT_PENDING_EXPIRE_HOURS = '72';
 process.env.APPT_PRINCIPAL_PURPOSE_MIN_LENGTH = '30';
+process.env.APPOINTMENTS_ENABLED = 'true';
 process.env.RESEND_API_KEY = '';
 
 const app = express();

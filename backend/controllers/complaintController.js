@@ -3,6 +3,8 @@ const notifyUser = require('../utils/notifyUser');
 const textLengthError = require('../utils/textLengthError');
 const { createRequestWithAttachments } = require('../utils/requestAttachments');
 
+const COMPLAINT_CATEGORIES = ['Classroom', 'Transport', 'Hostel', 'Library', 'Laboratory', 'Canteen', 'Infrastructure', 'Others'];
+
 const generateRequestId = (type) => {
   const random = Math.random().toString(36).slice(2, 8).toUpperCase();
   return `${type}-${Date.now().toString().slice(-6)}-${random}`;
@@ -13,6 +15,9 @@ const createComplaint = async (req, res) => {
 
   if (!category || !subject || !description) {
     return res.status(400).json({ message: 'Please provide category, subject and description' });
+  }
+  if (!COMPLAINT_CATEGORIES.includes(category)) {
+    return res.status(400).json({ message: 'Please provide a valid complaint category' });
   }
 
   const lengthError = textLengthError([

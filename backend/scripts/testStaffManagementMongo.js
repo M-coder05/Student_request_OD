@@ -15,8 +15,8 @@ const AuditLog = require('../models/AuditLog');
 const { ensureAppointmentIndexes } = require('../config/db');
 
 const setupTestDatabase = () => {
-  const configuredUri = process.env.MONGO_URI;
-  assert.ok(configuredUri, 'Set MONGO_URI in the process environment to run this integration test');
+  const configuredUri = process.env.TEST_MONGO_URI;
+  assert.ok(configuredUri, 'Set TEST_MONGO_URI to a disposable MongoDB server to run this integration test');
   const uri = new URL(configuredUri);
   assert.ok(['mongodb:', 'mongodb+srv:'].includes(uri.protocol), 'MONGO_URI must be a MongoDB URI');
   const originalDatabaseName = decodeURIComponent(uri.pathname.replace(/^\/+/, '')) || 'student_service_portal';
@@ -33,13 +33,16 @@ const setupTestDatabase = () => {
 const testDatabaseName = setupTestDatabase();
 process.env.JWT_SECRET = crypto.randomBytes(32).toString('hex');
 process.env.RESEND_API_KEY = '';
+process.env.APPOINTMENTS_ENABLED = 'true';
 
 const app = express();
 app.use(express.json());
 app.use('/api/auth', require('../routes/authRoutes'));
 app.use('/api/student', require('../routes/studentRoutes'));
 app.use('/api/appointments', require('../routes/appointmentRoutes'));
+app.use('/api/availability', require('../routes/availabilityRoutes'));
 app.use('/api/admin', require('../routes/adminRoutes'));
+app.use(require('../middleware/errorMiddleware'));
 
 const request = async (baseUrl, path, token, method = 'GET', body) => {
   const response = await fetch(`${baseUrl}${path}`, {
@@ -169,7 +172,7 @@ const main = async () => {
     const blockedQueue = await request(baseUrl, '/api/appointments/staff-queue', mustChangeLogin.body.token);
     const blockedAdminEndpoint = await request(baseUrl, '/api/admin/staff', mustChangeLogin.body.token);
     assert.equal(me.status, 200);
-    assert.equal(profile.status, 200);
+    assert.equal(profile.status, 403);
     assert.equal(blockedQueue.status, 403);
     assert.equal(blockedQueue.body.message, 'Password change required');
     assert.equal(blockedAdminEndpoint.status, 403);
@@ -195,7 +198,7 @@ const main = async () => {
     const staffQueue = await request(baseUrl, '/api/appointments/staff-queue', passwordChanged.body.token);
     assert.equal(staffQueue.status, 200);
     assert.equal((await User.findById(staffRecord._id)).mustChangePassword, false);
-    console.log('PASS 4: Forced-change login reported staff fields; /auth/me and profile worked, other protected endpoints returned 403 until password change, then queue returned 200.');
+    console.log('PASS 4: Forced-change login reported staff fields; /auth/me worked, student profile and other protected endpoints returned 403 until password change, then queue returned 200.');
 
     await Availability.create({
       staffId: staffRecord._id,
@@ -205,6 +208,29 @@ const main = async () => {
       slotMinutes: 30,
       active: true,
     });
+    const originalInsertMany = Availability.insertMany;
+    try {
+      Availability.insertMany = async () => {
+        throw new Error('injected availability insert failure');
+      };
+      const failedAvailability = await request(baseUrl, '/api/availability/me', passwordChanged.body.token, 'PUT', {
+        availability: [{
+          weekday: 1,
+          startTime: '10:00',
+          endTime: '18:00',
+          slotMinutes: 30,
+          active: true,
+        }],
+      });
+      assert.equal(failedAvailability.status, 500);
+    } finally {
+      Availability.insertMany = originalInsertMany;
+    }
+    const retainedAvailability = await Availability.find({ staffId: staffRecord._id }).lean();
+    assert.equal(retainedAvailability.length, 1);
+    assert.equal(retainedAvailability[0].startTime, '09:00');
+    console.log('PASS: Failed availability insertion rolls back the deletion and retains the previous staff schedule.');
+
     const bookableBeforeDisable = await request(
       baseUrl,
       '/api/appointments/staff?role=faculty&department=Mathematics',

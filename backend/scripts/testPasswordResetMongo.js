@@ -14,8 +14,8 @@ const PasswordResetRequest = require('../models/PasswordResetRequest');
 const AuditLog = require('../models/AuditLog');
 
 const setupTestDatabase = () => {
-  const configuredUri = process.env.MONGO_URI;
-  assert.ok(configuredUri, 'Set MONGO_URI in the process environment to run this integration test');
+  const configuredUri = process.env.TEST_MONGO_URI;
+  assert.ok(configuredUri, 'Set TEST_MONGO_URI to a disposable MongoDB server to run this integration test');
   const uri = new URL(configuredUri);
   assert.ok(['mongodb:', 'mongodb+srv:'].includes(uri.protocol), 'MONGO_URI must be a MongoDB URI');
   const originalDatabaseName = decodeURIComponent(uri.pathname.replace(/^\/+/, '')) || 'student_service_portal';
@@ -257,7 +257,8 @@ const main = async () => {
     const emailRequest = await PasswordResetRequest.findOne({ userId: emailStudent._id, status: 'Pending' })
       .select('+resetTokenHash +resetTokenExpiresAt +resetTokenUsedAt');
     const email = emails.at(-1);
-    const resetToken = email?.text.match(/reset-password\/([A-Za-z0-9_-]+)/)?.[1];
+    const resetToken = email?.text.match(/reset-password#token=([A-Za-z0-9_-]+)/)?.[1];
+    assert.match(email.text, /https:\/\/portal\.example\.test\/reset-password#token=/);
     assert.ok(resetToken);
     assert.equal(emailRequest.resetTokenHash, crypto.createHash('sha256').update(resetToken).digest('hex'));
     assert.notEqual(emailRequest.resetTokenHash, resetToken);
@@ -303,7 +304,7 @@ const main = async () => {
     assert.equal(expiredRequestResponse.status, 200);
     const expiredRequest = await PasswordResetRequest.findOne({ userId: expiredStudent._id })
       .select('+resetTokenHash +resetTokenExpiresAt');
-    const expiredToken = emails.at(-1).text.match(/reset-password\/([A-Za-z0-9_-]+)/)[1];
+    const expiredToken = emails.at(-1).text.match(/reset-password#token=([A-Za-z0-9_-]+)/)[1];
     await PasswordResetRequest.updateOne({ _id: expiredRequest._id }, { $set: { resetTokenExpiresAt: new Date(Date.now() - 1000) } });
     const expiredResult = await request(baseUrl, '/api/auth/reset-password', '', 'POST', {
       token: expiredToken,

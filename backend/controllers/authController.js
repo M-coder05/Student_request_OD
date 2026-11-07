@@ -11,8 +11,8 @@ const {
   hasDemoCredentials,
   isDemoModeEnabled,
 } = require('../config/demo');
+const isValidEmail = require('../utils/isValidEmail');
 
-const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 const FORGOT_PASSWORD_MESSAGE = 'If an account matches, your request has been recorded';
 const RESET_TOKEN_ERROR = 'Invalid or expired reset token';
 
@@ -256,8 +256,8 @@ const forgotPassword = async (req, res) => {
       { $set: { resetTokenHash: tokenHash, resetTokenExpiresAt: expiresAt, resetTokenUsedAt: null } }
     );
 
-    const frontendUrl = (process.env.FRONTEND_URL || 'http://localhost:5173').replace(/\/+$/, '');
-    const resetUrl = `${frontendUrl}/reset-password/${encodeURIComponent(token)}`;
+    const frontendUrl = (process.env.FRONTEND_URL || 'http://localhost:3000').replace(/\/+$/, '');
+    const resetUrl = `${frontendUrl}/reset-password#token=${encodeURIComponent(token)}`;
     try {
       await sendMail({
         to: user.email,
@@ -353,9 +353,10 @@ const getDemoAvailability = async (req, res) => {
   }
 
   const accounts = getDemoAccounts();
-  const [student, admin] = await Promise.all([
+  const [student, admin, faculty] = await Promise.all([
     User.findOne({ email: accounts.student.email, role: 'student', isDemo: true, isActive: { $ne: false } }).select('_id'),
     User.findOne({ email: accounts.admin.email, role: 'demo_admin', isDemo: true, isActive: { $ne: false } }).select('_id'),
+    User.findOne({ email: accounts.faculty.email, role: 'faculty', isDemo: true, isActive: { $ne: false } }).select('_id'),
   ]);
 
   res.status(200).json({
@@ -368,6 +369,10 @@ const getDemoAvailability = async (req, res) => {
       admin: {
         available: Boolean(admin),
         email: admin ? accounts.admin.email : '',
+      },
+      faculty: {
+        available: Boolean(faculty),
+        email: faculty ? accounts.faculty.email : '',
       },
     },
   });
@@ -382,7 +387,7 @@ const loginDemo = async (req, res) => {
   const accounts = getDemoAccounts();
   const account = accounts[role];
 
-  if (!account || !['student', 'admin'].includes(role)) {
+  if (!account || !['student', 'admin', 'faculty'].includes(role)) {
     return res.status(400).json({ message: 'Select a valid demo role' });
   }
 

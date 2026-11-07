@@ -1,5 +1,6 @@
 const express = require('express');
 const authMiddleware = require('../middleware/authMiddleware');
+const requireRole = require('../middleware/requireRole');
 const { deleteRequestAttachment } = require('../controllers/attachmentController');
 const {
   parseRequestAttachments,
@@ -11,7 +12,7 @@ const { createComplaint, getMyComplaints, getComplaintById } = require('../contr
 
 const router = express.Router();
 
-router.use(authMiddleware);
+router.use(authMiddleware, requireRole('student'));
 router.post('/', uploadRateLimit, requireUploadAvailable, parseRequestAttachments, validateRequestAttachments, createComplaint);
 router.get('/my', getMyComplaints);
 router.delete('/:id/attachments/:attachmentId', deleteRequestAttachment('complaint'));
