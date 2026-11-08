@@ -3,14 +3,44 @@ const express = require('express');
 const Appointment = require('../models/Appointment');
 const Availability = require('../models/Availability');
 const User = require('../models/User');
+const {
+  getBookableAppointmentRoles,
+} = require('../config/featureFlags');
 
 const authMiddlewarePath = require.resolve('../middleware/authMiddleware');
 require(authMiddlewarePath);
 const originalAuthMiddleware = require.cache[authMiddlewarePath].exports;
 const originalAppointmentFind = Appointment.find;
 const originalUserFind = User.find;
+const originalUserFindOne = User.findOne;
 const originalAvailabilityDistinct = Availability.distinct;
+const originalAvailabilityFindOne = Availability.findOne;
+const originalAppointmentBookableRoles = process.env.APPOINTMENT_BOOKABLE_ROLES;
 const originalAppointmentsEnabled = process.env.APPOINTMENTS_ENABLED;
+
+const staffMembers = {
+  real: {
+    _id: '507f1f77bcf86cd799439011',
+    name: 'Real Faculty',
+    role: 'faculty',
+    isActive: true,
+    isDemo: false,
+  },
+  demo: {
+    _id: '507f1f77bcf86cd799439012',
+    name: 'Demo Faculty',
+    role: 'faculty',
+    isActive: true,
+    isDemo: true,
+  },
+  principal: {
+    _id: '507f1f77bcf86cd799439013',
+    name: 'Principal',
+    role: 'principal',
+    isActive: true,
+    isDemo: false,
+  },
+};
 
 const users = {
   real: { _id: 'student-real', role: 'student', isDemo: false },
@@ -26,11 +56,21 @@ const main = async () => {
       select() { return this; },
       sort() { return Promise.resolve([]); },
     });
+    User.findOne = (filter) => {
+      const staff = Object.values(staffMembers).find((member) =>
+        member._id === String(filter._id) && member.isDemo === (filter.isDemo === true)
+      );
+      return {
+        select() { return this; },
+        then(resolve, reject) { return Promise.resolve(staff || null).then(resolve, reject); },
+      };
+    };
     Appointment.find = () => ({
       sort() { return this; },
       then(resolve, reject) { return Promise.resolve([]).then(resolve, reject); },
     });
     Availability.distinct = async () => [];
+    Availability.findOne = async () => null;
     require.cache[authMiddlewarePath].exports = (req, res, next) => {
       req.user = users[req.get('x-test-user')] || users.real;
       next();
@@ -56,6 +96,14 @@ const main = async () => {
       return { status: response.status, body: await response.json() };
     };
 
+    delete process.env.APPOINTMENT_BOOKABLE_ROLES;
+    assert.deepEqual(getBookableAppointmentRoles(), ['faculty', 'hod']);
+    process.env.APPOINTMENT_BOOKABLE_ROLES = 'hod, principal,unknown,faculty,hod';
+    assert.deepEqual(getBookableAppointmentRoles(), ['hod', 'principal', 'faculty']);
+    process.env.APPOINTMENT_BOOKABLE_ROLES = 'junk,unknown';
+    assert.deepEqual(getBookableAppointmentRoles(), ['faculty', 'hod']);
+    console.log('PASS: Bookable appointment roles default, accept custom roles, ignore unknown values and fall back for junk-only values.');
+
     delete process.env.APPOINTMENTS_ENABLED;
     let response = await request('/api/config/features');
     assert.deepEqual(response, { status: 200, body: { appointments: false } });
@@ -67,7 +115,11 @@ const main = async () => {
     console.log('PASS 2: Public feature endpoint reports appointments enabled when configured.');
 
     process.env.APPOINTMENTS_ENABLED = 'false';
-    for (const path of ['/api/appointments/staff', '/api/appointments', '/api/appointments/staff/staff-real/slots?date=2030-01-01']) {
+    for (const path of [
+      '/api/appointments/staff',
+      '/api/appointments',
+      `/api/appointments/staff/${staffMembers.real._id}/slots?date=2030-01-01`,
+    ]) {
       const options = path.endsWith('/staff') ? {} : { method: 'POST', body: JSON.stringify({}) };
       if (path.includes('/slots?')) Object.assign(options, { method: 'GET', body: undefined });
       response = await request(path, 'real', options);
@@ -78,14 +130,34 @@ const main = async () => {
 
     response = await request('/api/appointments/staff', 'demo');
     assert.equal(response.status, 200);
-    response = await request('/api/appointments/staff/staff-real/slots?date=2030-01-01', 'demo');
-    assert.notEqual(response.status, 403);
+    response = await request(`/api/appointments/staff/${staffMembers.demo._id}/slots?date=2030-01-01`, 'demo');
+    assert.equal(response.status, 200);
     response = await request('/api/appointments', 'demo', { method: 'POST', body: JSON.stringify({}) });
     assert.equal(response.status, 400);
     assert.notEqual(response.body.message, 'Appointment booking is not enabled');
     console.log('PASS 4: Disabled demo student requests bypass the feature gate.');
 
+    delete process.env.APPOINTMENT_BOOKABLE_ROLES;
     process.env.APPOINTMENTS_ENABLED = 'true';
+    response = await request('/api/appointments/staff');
+    assert.deepEqual(response.body.roles, ['faculty', 'hod']);
+    process.env.APPOINTMENT_BOOKABLE_ROLES = 'faculty,hod';
+    response = await request('/api/appointments/staff?role=principal');
+    assert.equal(response.status, 400);
+    assert.equal(response.body.message, 'That role is not available for booking');
+    response = await request('/api/appointments', 'real', {
+      method: 'POST',
+      body: JSON.stringify({
+        staffId: staffMembers.principal._id,
+        date: '2030-01-01',
+        startTime: '10:00',
+        purpose: 'A sufficiently long purpose for the Principal meeting.',
+      }),
+    });
+    assert.equal(response.status, 400);
+    assert.equal(response.body.message, 'That role is not available for booking');
+    console.log('PASS: Principal lookup and booking are rejected with HTTP 400 when Principal is not an allowed role.');
+
     for (const user of ['real', 'demo']) {
       response = await request('/api/appointments/staff', user);
       assert.equal(response.status, 200);
@@ -106,11 +178,15 @@ const main = async () => {
     if (server) await new Promise((resolve, reject) => server.close((error) => (error ? reject(error) : resolve())));
     Appointment.find = originalAppointmentFind;
     User.find = originalUserFind;
+    User.findOne = originalUserFindOne;
     Availability.distinct = originalAvailabilityDistinct;
+    Availability.findOne = originalAvailabilityFindOne;
     require.cache[authMiddlewarePath].exports = originalAuthMiddleware;
     delete require.cache[require.resolve('../routes/appointmentRoutes')];
     if (originalAppointmentsEnabled === undefined) delete process.env.APPOINTMENTS_ENABLED;
     else process.env.APPOINTMENTS_ENABLED = originalAppointmentsEnabled;
+    if (originalAppointmentBookableRoles === undefined) delete process.env.APPOINTMENT_BOOKABLE_ROLES;
+    else process.env.APPOINTMENT_BOOKABLE_ROLES = originalAppointmentBookableRoles;
   }
 };
 

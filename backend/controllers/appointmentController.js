@@ -6,6 +6,7 @@ const BlackoutDate = require('../models/BlackoutDate');
 const User = require('../models/User');
 const AuditLog = require('../models/AuditLog');
 const notifyUser = require('../utils/notifyUser');
+const { getBookableAppointmentRoles } = require('../config/featureFlags');
 const {
   addDays,
   isValidDate,
@@ -107,8 +108,12 @@ const expirePendingAppointments = async (filter = {}) => {
 const getBookableStaff = async (req, res) => {
   if (req.user.role !== 'student') return res.status(403).json({ message: 'Student access required' });
   const { role, department } = req.query;
+  const bookableRoles = getBookableAppointmentRoles();
+  if (role !== undefined && (typeof role !== 'string' || (role && !bookableRoles.includes(role)))) {
+    return res.status(400).json({ message: 'That role is not available for booking' });
+  }
   const filter = {
-    role: STAFF_ROLES.includes(role) ? role : { $in: STAFF_ROLES },
+    role: role || { $in: bookableRoles },
     isActive: { $ne: false },
     isDemo: req.user.isDemo === true,
   };
@@ -116,6 +121,7 @@ const getBookableStaff = async (req, res) => {
     filter.$or = [
       { staffDepartment: department.trim() },
       { staffDepartment: { $in: ['', null] }, department: department.trim() },
+      { role: 'principal' },
     ];
   }
   const staff = await User.find(filter)
@@ -129,6 +135,7 @@ const getBookableStaff = async (req, res) => {
     : [];
   const activeStaff = new Set(activeStaffIds.map(String));
   return res.status(200).json({
+    roles: bookableRoles,
     staff: staff
       .filter((member) => activeStaff.has(String(member._id)))
       .map((member) => {
@@ -145,17 +152,22 @@ const getAvailableSlots = async (req, res) => {
   if (req.user.role !== 'student') return res.status(403).json({ message: 'Student access required' });
   const { id } = req.params;
   const { date } = req.query;
+  const bookableRoles = getBookableAppointmentRoles();
   if (!mongoose.isValidObjectId(id) || !isValidDate(date)) {
     return res.status(400).json({ message: 'A valid staff ID and date (YYYY-MM-DD) are required' });
   }
 
   const staff = await User.findOne({
     _id: id,
-    role: { $in: STAFF_ROLES },
     isActive: { $ne: false },
     isDemo: req.user.isDemo === true,
   }).select('name department staffDepartment role');
-  if (!staff) return res.status(404).json({ message: 'Bookable staff member not found' });
+  if (!staff || !STAFF_ROLES.includes(staff.role)) {
+    return res.status(404).json({ message: 'Bookable staff member not found' });
+  }
+  if (!bookableRoles.includes(staff.role)) {
+    return res.status(400).json({ message: 'That role is not available for booking' });
+  }
   staff.department = staff.staffDepartment || staff.department || '';
 
   await expirePendingAppointments({ staffId: staff._id, isDemo: staff.isDemo === true });
@@ -227,13 +239,18 @@ const createAppointment = async (req, res) => {
     return res.status(400).json({ message: 'Purpose must be between 10 and 300 characters' });
   }
 
+  const bookableRoles = getBookableAppointmentRoles();
   const staff = await User.findOne({
     _id: staffId,
-    role: { $in: STAFF_ROLES },
     isActive: { $ne: false },
     isDemo: req.user.isDemo === true,
   });
-  if (!staff) return res.status(404).json({ message: 'Bookable staff member not found' });
+  if (!staff || !STAFF_ROLES.includes(staff.role)) {
+    return res.status(404).json({ message: 'Bookable staff member not found' });
+  }
+  if (!bookableRoles.includes(staff.role)) {
+    return res.status(400).json({ message: 'That role is not available for booking' });
+  }
   const staffDepartment = staff.staffDepartment || staff.department || '';
   if (staff.role !== 'principal' && staffDepartment !== req.user.department) {
     return res.status(403).json({ message: 'You can only book staff in your department' });

@@ -190,6 +190,7 @@ Smart-Student-Service-Portal/
 | `CLOUDINARY_API_SECRET` | Optional outside production | Cloudinary API secret; keep it only in the server environment | `your-api-secret` |
 | `APPT_MIN_NOTICE_HOURS` | Optional | Minimum advance notice for an appointment (default: 2 hours) | `2` |
 | `APPOINTMENTS_ENABLED` | Optional | Enables appointment booking for real student accounts; defaults to `false` (demo accounts remain enabled) | `false` |
+| `APPOINTMENT_BOOKABLE_ROLES` | Optional | Comma-separated student-bookable staff roles (`faculty`, `hod`, `principal`; defaults to `faculty,hod`) | `faculty,hod` |
 | `APPT_MAX_ACTIVE` | Optional | Maximum active appointments per student per week (default: 2) | `2` |
 | `APPT_CANCEL_BEFORE_HOURS` | Optional | Minimum hours before start when a student may cancel (default: 2) | `2` |
 | `APPT_PENDING_EXPIRE_HOURS` | Optional | Pending appointment request age before lazy expiry (default: 72 hours) | `72` |
@@ -372,9 +373,9 @@ All backend endpoints are prefixed with `/api`.
 - **`super_admin`**: Full portal ownership. Can manage all administrative workflows, toggle account statuses (enable/disable), and manage admin access.
 - **`demo_admin`**: Isolated administrator role restricted to reviewing and managing sample data in demo mode.
 
-Students can book either a faculty meeting or an appointment with their HOD/Principal using the same scheduling engine. Seeded demo staff and demo student appointments are isolated from real accounts, and demo emails are logged rather than delivered.
+Students can book faculty or HOD appointments by default; Principal bookings can be enabled by adding `principal` to `APPOINTMENT_BOOKABLE_ROLES`. Seeded demo staff and demo student appointments are isolated from real accounts, and demo emails are logged rather than delivered.
 
-Appointment booking is hidden and unavailable to real student accounts by default. After real staff accounts have been created and configured with availability, set `APPOINTMENTS_ENABLED=true` in the server environment and restart the server to enable it. Demo accounts remain enabled regardless of this setting. The public `GET /api/config/features` endpoint exposes the configured availability to the client; staff appointment-management routes remain available while student booking is disabled.
+Appointment booking is hidden and unavailable to real student accounts by default. After real staff accounts have been created and configured with availability, set `APPOINTMENTS_ENABLED=true` in the server environment and restart the server to enable it; use `APPOINTMENT_BOOKABLE_ROLES` to choose which of faculty, HOD, and Principal students may book (default: `faculty,hod`). Demo accounts remain enabled regardless of the booking flag. The public `GET /api/config/features` endpoint exposes the configured availability to the client; staff appointment-management routes remain available while student booking is disabled.
 
 ---
 

@@ -21,6 +21,7 @@ export default function BookAppointment() {
   const { user } = useAuth();
   const { showToast } = useToast();
   const [staffRole, setStaffRole] = useState('faculty');
+  const [staffRoles, setStaffRoles] = useState([]);
   const [staff, setStaff] = useState([]);
   const [staffId, setStaffId] = useState('');
   const [date, setDate] = useState('');
@@ -43,14 +44,25 @@ export default function BookAppointment() {
     setSlots([]);
     setStartTime('');
     setLoadingStaff(true);
-    const query = new URLSearchParams({ role: staffRole });
+    const query = new URLSearchParams();
+    if (staffRoles.length) query.set('role', staffRole);
     if (department) query.set('department', department);
-    apiRequest(`/appointments/staff?${query}`)
+    const queryString = query.toString();
+    apiRequest(`/appointments/staff${queryString ? `?${queryString}` : ''}`)
       .then((result) => {
         if (!active) return;
+        const availableRoles = result.roles || [];
         const availableStaff = result.staff || [];
+        setStaffRoles((currentRoles) => (
+          currentRoles.length === availableRoles.length &&
+          currentRoles.every((role, index) => role === availableRoles[index])
+            ? currentRoles
+            : availableRoles
+        ));
         setStaff(availableStaff);
-        setStaffId(availableStaff[0]?._id || '');
+        const nextRole = availableRoles.includes(staffRole) ? staffRole : availableRoles[0] || '';
+        setStaffRole(nextRole);
+        setStaffId(availableStaff.find((member) => member.role === nextRole)?._id || '');
       })
       .catch((error) => showToast(error.message || 'Unable to load staff', 'error'))
       .finally(() => {
@@ -59,7 +71,7 @@ export default function BookAppointment() {
     return () => {
       active = false;
     };
-  }, [staffRole, department, showToast]);
+  }, [staffRole, staffRoles, department, showToast]);
 
   useEffect(() => {
     if (!staffId || !date) {
@@ -114,12 +126,23 @@ export default function BookAppointment() {
           <p className="muted appointment-intro">Choose a Principal/HOD appointment or a faculty meeting.</p>
           <div className="appointment-form">
             <div className="field-wrap">
-              <label htmlFor="appointmentStaffRole">Appointment with</label>
-              <select id="appointmentStaffRole" value={staffRole} onChange={(event) => setStaffRole(event.target.value)}>
-                <option value="faculty">Faculty</option>
-                <option value="hod">Head of Department (HOD)</option>
-                <option value="principal">Principal</option>
-              </select>
+              {staffRoles.length > 1 ? (
+                <>
+                  <label htmlFor="appointmentStaffRole">Appointment with</label>
+                  <select id="appointmentStaffRole" value={staffRole} onChange={(event) => setStaffRole(event.target.value)}>
+                    {staffRoles.map((role) => (
+                      <option key={role} value={role}>
+                        {role === 'faculty' ? 'Faculty' : role === 'hod' ? 'Head of Department (HOD)' : 'Principal'}
+                      </option>
+                    ))}
+                  </select>
+                </>
+              ) : (
+                <>
+                  <label>Appointment with</label>
+                  <span>{staffRoles[0] === 'faculty' ? 'Faculty' : staffRoles[0] === 'hod' ? 'Head of Department (HOD)' : staffRoles[0] === 'principal' ? 'Principal' : 'No roles available'}</span>
+                </>
+              )}
             </div>
             <div className="field-wrap">
               <label htmlFor="appointmentStaff">Staff member</label>
