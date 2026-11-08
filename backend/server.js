@@ -21,6 +21,7 @@ const appointmentRoutes = require('./routes/appointmentRoutes');
 const availabilityRoutes = require('./routes/availabilityRoutes');
 const configRoutes = require('./routes/configRoutes');
 const attachmentRoutes = require('./routes/attachmentRoutes');
+const announcementRoutes = require('./routes/announcementRoutes');
 const errorMiddleware = require('./middleware/errorMiddleware');
 const safeRequestUrl = require('./utils/safeRequestUrl');
 const seedAdmin = require('./seedAdmin');
@@ -96,6 +97,7 @@ app.use('/api/appointments', appointmentRoutes);
 app.use('/api/availability', availabilityRoutes);
 app.use('/api/config', configRoutes);
 app.use('/api/attachments', attachmentRoutes);
+app.use('/api/announcements', announcementRoutes);
 app.use('/api/admin', adminRoutes);
 
 app.get('/api/health', (req, res) => {

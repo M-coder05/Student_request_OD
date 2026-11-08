@@ -35,6 +35,7 @@ import SetPassword from './pages/SetPassword';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import PasswordResetRequests from './pages/PasswordResetRequests';
+import AnnouncementsAdmin from './pages/AnnouncementsAdmin';
 import ServerWakeupLoader from './components/ServerWakeupLoader';
 import AppointmentBookingGuard from './components/AppointmentBookingGuard';
 
@@ -86,6 +87,7 @@ export default function App() {
                   <Route path="/admin" element={<Admin />} />
                   <Route path="/admin/staff" element={<StaffManagement />} />
                   <Route path="/admin/password-resets" element={<PasswordResetRequests />} />
+                  <Route path="/admin/announcements" element={<AnnouncementsAdmin />} />
                 </Route>
 
                 {/* 404 Catch-All */}

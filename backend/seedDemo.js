@@ -17,6 +17,7 @@ const Complaint = require('./models/Complaint');
 const Availability = require('./models/Availability');
 const BlackoutDate = require('./models/BlackoutDate');
 const Appointment = require('./models/Appointment');
+const Announcement = require('./models/Announcement');
 const { buildDemoAppointmentDocuments } = require('./utils/demoAppointments');
 
 const dateDaysFromNow = (days) => new Date(Date.now() + days * 24 * 60 * 60 * 1000);
@@ -117,6 +118,7 @@ const seedDemo = async () => {
     BonafideRequest.deleteMany({ studentId: student._id }),
     Complaint.deleteMany({ studentId: student._id }),
     Appointment.deleteMany({ studentId: student._id, isDemo: true }),
+    Announcement.deleteMany({ isDemo: true }),
     Availability.deleteMany({ staffId: { $in: demoStaff.map((staff) => staff._id) } }),
     BlackoutDate.deleteMany({ staffId: { $in: demoStaff.map((staff) => staff._id) } }),
   ]);
@@ -132,6 +134,26 @@ const seedDemo = async () => {
 
   const faculty = demoStaff.find((staff) => staff.role === 'faculty');
   await Appointment.insertMany(buildDemoAppointmentDocuments({ student, faculty }));
+  await Announcement.insertMany([
+    {
+      title: 'Welcome to the demo',
+      message: 'Explore the portal using the sample student and staff accounts.',
+      audience: 'all',
+      pinned: true,
+      createdBy: admin._id,
+      createdByName: admin.name,
+      isDemo: true,
+    },
+    {
+      title: 'Library timings this week',
+      message: 'The library is open during its regular weekday hours this week.',
+      audience: 'all',
+      pinned: false,
+      createdBy: admin._id,
+      createdByName: admin.name,
+      isDemo: true,
+    },
+  ]);
 
   await Promise.all([
     LeaveRequest.insertMany([

@@ -8,6 +8,7 @@ import Skeleton from '../components/Skeleton';
 import LoadError from '../components/LoadError';
 import useLoading from '../hooks/useLoading';
 import { useFeatures } from '../context/FeatureContext';
+import AnnouncementsPanel from '../components/AnnouncementsPanel';
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -103,6 +104,7 @@ export default function Dashboard() {
                 ))}
               </div>
             </section>
+            <AnnouncementsPanel />
           </div>
         </main>
       </>
@@ -184,6 +186,7 @@ export default function Dashboard() {
               ))}
             </div>
           </section>
+          <AnnouncementsPanel />
         </div>
       </main>
     </>

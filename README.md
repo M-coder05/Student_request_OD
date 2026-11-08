@@ -377,6 +377,8 @@ Students can book faculty or HOD appointments by default; Principal bookings can
 
 Appointment booking is hidden and unavailable to real student accounts by default. After real staff accounts have been created and configured with availability, set `APPOINTMENTS_ENABLED=true` in the server environment and restart the server to enable it; use `APPOINTMENT_BOOKABLE_ROLES` to choose which of faculty, HOD, and Principal students may book (default: `faculty,hod`). Demo accounts remain enabled regardless of the booking flag. The public `GET /api/config/features` endpoint exposes the configured availability to the client; staff appointment-management routes remain available while student booking is disabled.
 
+Administrators can publish announcements for all users, students, or staff from **Admin dashboard → Announcements**. Active announcements appear on student and staff dashboards; pinned announcements are shown first, and announcements can optionally expire.
+
 ---
 
 ## Deployment on Render

@@ -279,6 +279,7 @@ export default function Admin() {
           <nav className="main-nav">
             <Link to="/appointments/requests">Appointment requests</Link>
             <Link to="/appointments/today">Today's schedule</Link>
+            <Link to="/admin/announcements">Announcements</Link>
             {user?.role === 'admin' || user?.role === 'super_admin'
               ? <Link to="/admin/password-resets">Password reset requests ({stats.pendingPasswordResets})</Link>
               : null}
