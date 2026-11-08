@@ -17,7 +17,7 @@ const Complaint = require('./models/Complaint');
 const Availability = require('./models/Availability');
 const BlackoutDate = require('./models/BlackoutDate');
 const Appointment = require('./models/Appointment');
-const { addDays, todayInKolkata, weekdayForDate } = require('./utils/appointmentTime');
+const { buildDemoAppointmentDocuments } = require('./utils/demoAppointments');
 
 const dateDaysFromNow = (days) => new Date(Date.now() + days * 24 * 60 * 60 * 1000);
 
@@ -130,88 +130,8 @@ const seedDemo = async () => {
     active: true,
   }))));
 
-  const appointmentDates = [];
-  let appointmentDate = addDays(todayInKolkata(), 1);
-  while (appointmentDates.length < 3) {
-    const weekday = weekdayForDate(appointmentDate);
-    if (weekday >= 1 && weekday <= 5) appointmentDates.push(appointmentDate);
-    appointmentDate = addDays(appointmentDate, 1);
-  }
   const faculty = demoStaff.find((staff) => staff.role === 'faculty');
-  await Appointment.insertMany([
-    {
-      appointmentId: 'APT-DEMO-001',
-      studentId: student._id,
-      studentName: student.name,
-      registerNumber: student.registerNumber,
-      department: student.department,
-      staffId: faculty._id,
-      staffName: faculty.name,
-      staffRole: 'faculty',
-      date: appointmentDates[0],
-      startTime: '10:00',
-      endTime: '10:30',
-      purpose: 'Discuss project supervision',
-      status: 'Pending',
-      isDemo: true,
-      statusHistory: [{
-        fromStatus: '',
-        toStatus: 'Pending',
-        actorId: student._id,
-        actorName: student.name,
-        actorRole: 'student',
-        remark: '',
-      }],
-    },
-    {
-      appointmentId: 'APT-DEMO-002',
-      studentId: student._id,
-      studentName: student.name,
-      registerNumber: student.registerNumber,
-      department: student.department,
-      staffId: faculty._id,
-      staffName: faculty.name,
-      staffRole: 'faculty',
-      date: appointmentDates[1],
-      startTime: '11:00',
-      endTime: '11:30',
-      purpose: 'Review semester study plan',
-      status: 'Pending',
-      isDemo: true,
-      statusHistory: [{
-        fromStatus: '',
-        toStatus: 'Pending',
-        actorId: student._id,
-        actorName: student.name,
-        actorRole: 'student',
-        remark: '',
-      }],
-    },
-    {
-      appointmentId: 'APT-DEMO-003',
-      studentId: student._id,
-      studentName: student.name,
-      registerNumber: student.registerNumber,
-      department: student.department,
-      staffId: faculty._id,
-      staffName: faculty.name,
-      staffRole: 'faculty',
-      date: appointmentDates[2],
-      startTime: '13:00',
-      endTime: '13:30',
-      purpose: 'Discuss internship preparation',
-      status: 'Approved',
-      isDemo: true,
-      statusHistory: [{
-        fromStatus: 'Pending',
-        toStatus: 'Approved',
-        actorId: student._id,
-        actorName: student.name,
-        actorRole: 'student',
-        remark: '',
-      }],
-    },
-  ]);
+  await Appointment.insertMany(buildDemoAppointmentDocuments({ student, faculty }));
 
   await Promise.all([
     LeaveRequest.insertMany([

@@ -1,9 +1,6 @@
 const { execFileSync } = require('node:child_process');
 const path = require('node:path');
-const mongoose = require('mongoose');
 const { test, expect } = require('@playwright/test');
-const Appointment = require('../backend/models/Appointment');
-const { todayInKolkata } = require('../backend/utils/appointmentTime');
 const { assertSafeMongoUri, getTestEnvironment } = require('./helpers/test-environment');
 
 const root = path.resolve(__dirname, '..');
@@ -40,20 +37,6 @@ const reseedDemo = () => {
     env: { ...process.env, ...environment },
     stdio: 'inherit',
   });
-};
-
-const moveAppointmentToToday = async (appointmentId) => {
-  const uri = assertSafeMongoUri(process.env.E2E_MONGO_URI);
-  await mongoose.connect(uri, { serverSelectionTimeoutMS: 15000 });
-  try {
-    const result = await Appointment.updateOne(
-      { appointmentId, isDemo: true },
-      { $set: { date: todayInKolkata() } }
-    );
-    expect(result.matchedCount).toBe(1);
-  } finally {
-    await mongoose.disconnect();
-  }
 };
 
 test('login page shows enabled Student, Admin, and Faculty demo cards', async ({ page }) => {
@@ -101,6 +84,10 @@ test('Faculty demo logs in as the seeded faculty and sees three seeded appointme
     await expect(page.getByRole('row').filter({ hasText: purpose })).toBeVisible();
   }
   await expect(page.locator('.table-wrap tbody tr')).toHaveCount(3);
+
+  await page.goto('/appointments/today');
+  const todayApprovedRow = page.getByRole('row').filter({ hasText: 'Discuss internship preparation' });
+  await expect(todayApprovedRow).toContainText('Approved');
 });
 
 test('Faculty can approve, reject, and complete demo appointments with visible status updates', async ({ page }) => {
@@ -116,9 +103,8 @@ test('Faculty can approve, reject, and complete demo appointments with visible s
   await rejectedRow.getByRole('button', { name: 'Reject' }).click();
   await expect(rejectedRow).toContainText('Rejected');
 
-  await moveAppointmentToToday('APT-DEMO-001');
   await page.goto('/appointments/today');
-  const todayRow = page.getByRole('row').filter({ hasText: 'Discuss project supervision' });
+  const todayRow = page.getByRole('row').filter({ hasText: 'Discuss internship preparation' });
   await expect(todayRow).toContainText('Approved');
   page.once('dialog', (dialog) => dialog.accept(''));
   await todayRow.getByRole('button', { name: 'Complete' }).click();

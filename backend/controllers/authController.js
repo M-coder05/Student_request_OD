@@ -6,6 +6,7 @@ const PasswordResetRequest = require('../models/PasswordResetRequest');
 const AuditLog = require('../models/AuditLog');
 const AllowedStudent = require('../models/AllowedStudent');
 const sendMail = require('../utils/mailer');
+const { ensureFreshDemoAppointments } = require('../utils/demoAppointments');
 const {
   getDemoAccounts,
   hasDemoCredentials,
@@ -400,6 +401,29 @@ const loginDemo = async (req, res) => {
 
   if (!user || !(await bcrypt.compare(account.password, user.password))) {
     return res.status(503).json({ message: 'Demo account is unavailable. Run npm run seed:demo and try again.' });
+  }
+
+  if (['student', 'faculty'].includes(user.role)) {
+    try {
+      const student = user.role === 'student' ? user : await User.findOne({
+        email: accounts.student.email,
+        role: 'student',
+        isDemo: true,
+        isActive: { $ne: false },
+      });
+      const faculty = user.role === 'faculty' ? user : await User.findOne({
+        email: accounts.faculty.email,
+        role: 'faculty',
+        isDemo: true,
+        isActive: { $ne: false },
+      });
+      if (!student || !faculty) throw new Error('Demo student or faculty account not found');
+      await ensureFreshDemoAppointments({ student, faculty });
+    } catch (error) {
+      if (error?.code !== 11000) {
+        console.warn('Unable to refresh demo appointments:', error?.message || 'unknown error');
+      }
+    }
   }
 
   res.status(200).json({
