@@ -31,12 +31,12 @@ export default function StudentHeader({ title = 'Student Dashboard', showNav = t
               <>
                 <Link to="/appointments/availability">My availability</Link>
                 <Link to="/appointments/requests">Appointment requests</Link>
-                <Link to="/appointments/today">Today's schedule</Link>
+                <Link to="/appointments/today">Today’s schedule</Link>
               </>
             ) : isAdmin ? (
               <>
                 <Link to="/appointments/requests">Appointment requests</Link>
-                <Link to="/appointments/today">Today's schedule</Link>
+                <Link to="/appointments/today">Today’s schedule</Link>
               </>
             ) : (
               <>

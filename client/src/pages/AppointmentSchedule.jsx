@@ -55,13 +55,14 @@ export default function AppointmentSchedule() {
   return (
     <>
       <DemoBanner />
-      <StudentHeader title="Today's schedule" />
+      <StudentHeader title="Today’s schedule" />
       <main className="page-shell">
         <div className="container">
-          <section className="card">
-            <h2>Today’s schedule — {formatDate(todayInKolkata())}</h2>
+          <section className="card staff-page-card">
+            <h2>Today’s schedule</h2>
+            <p className="muted">{formatDate(todayInKolkata())}</p>
             {loading ? <p>Loading schedule…</p> : null}
-            {!loading && !appointments.length ? <p className="muted">No appointments scheduled for today.</p> : null}
+            {!loading && !appointments.length ? <p className="muted">No approved appointments today.</p> : null}
             {!loading && appointments.length ? (
               <div className="table-wrap">
                 <table>
@@ -79,7 +80,7 @@ export default function AppointmentSchedule() {
                               <button type="button" className="btn btn-primary" onClick={() => setOutcome(appointment, 'complete')}>Complete</button>
                               <button type="button" className="btn btn-secondary" onClick={() => setOutcome(appointment, 'no-show')}>No-show</button>
                             </div>
-                          ) : '—'}
+                          ) : <span className="muted">No actions</span>}
                         </td>
                       </tr>
                     ))}

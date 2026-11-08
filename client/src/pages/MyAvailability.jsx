@@ -181,7 +181,7 @@ export default function MyAvailability() {
             )}
           </section>
 
-          <section className="card" style={{ marginTop: 24 }}>
+          <section className="card staff-page-card" style={{ marginTop: 24 }}>
             <h2>Blackout dates</h2>
             <form onSubmit={addBlackout} style={{ display: 'flex', flexWrap: 'wrap', gap: 12, alignItems: 'end' }}>
               <label>Date<input type="date" value={blackoutDate} onChange={(event) => setBlackoutDate(event.target.value)} required /></label>

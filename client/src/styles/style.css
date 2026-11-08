@@ -808,3 +808,10 @@ tbody tr:hover { background: #f8fbfc; }
 @media (max-width: 520px) {
   .file-upload-list li,.request-attachments li { align-items: flex-start; }
 }
+
+.staff-page-card { padding: clamp(20px, 3vw, 30px); }
+.staff-page-card > h2 { margin-bottom: var(--space-2); }
+.appointment-request-tabs { display: flex; flex-wrap: wrap; gap: var(--space-2); margin: 0 0 var(--space-4); }
+.appointment-request-tab { padding: 8px 14px; border: 1px solid var(--line); border-radius: var(--radius-sm); background: #fff; color: var(--navy-950); cursor: pointer; font: inherit; font-size: 0.84rem; }
+.appointment-request-tab-selected { border-color: var(--blue-700); background: var(--blue-700); color: #fff; }
+.appointment-request-tab:focus-visible { outline: 3px solid var(--cyan-500); outline-offset: 2px; }
