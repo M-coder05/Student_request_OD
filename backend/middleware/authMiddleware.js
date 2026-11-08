@@ -34,7 +34,7 @@ const authMiddleware = async (req, res, next) => {
   if (user.isActive === false) {
     return res.status(401).json({ message: 'This account is disabled' });
   }
-  if (user.passwordChangedAt && decoded.iat * 1000 < user.passwordChangedAt.getTime()) {
+  if (user.passwordChangedAt && decoded.iat < Math.floor(user.passwordChangedAt.getTime() / 1000)) {
     return res.status(401).json({ message: 'Please log in again' });
   }
 

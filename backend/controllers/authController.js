@@ -30,9 +30,6 @@ const recordPasswordResetAction = (actor, requestId, action, details) => AuditLo
 
 const generateToken = (user) => {
   const payload = { id: user._id, role: user.role };
-  if (user.passwordChangedAt) {
-    payload.iat = Math.ceil(user.passwordChangedAt.getTime() / 1000);
-  }
   return jwt.sign(payload, process.env.JWT_SECRET, {
     expiresIn: process.env.JWT_EXPIRES_IN || '7d',
   });
@@ -445,4 +442,5 @@ module.exports = {
   getDemoAvailability,
   loginDemo,
   getMe,
+  generateToken,
 };
