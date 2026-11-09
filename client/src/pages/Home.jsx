@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import DemoLogin from '../components/DemoLogin';
@@ -7,7 +7,6 @@ import { useAuth } from '../context/AuthContext';
 import { useFeatures } from '../context/FeatureContext';
 
 export default function Home() {
-  const containerRef = useRef(null);
   const { isAuthenticated, user } = useAuth();
   const { appointmentsEnabled } = useFeatures();
   const appointmentPath =
@@ -16,69 +15,13 @@ export default function Home() {
   useEffect(() => {
     document.body.className = 'home-page';
 
-    // IntersectionObserver for reveal animation
-    if ('IntersectionObserver' in window && containerRef.current) {
-      const revealObserver = new IntersectionObserver(
-        (entries, observer) => {
-          entries.forEach((entry) => {
-            if (entry.isIntersecting) {
-              entry.target.classList.add('is-visible');
-              observer.unobserve(entry.target);
-            }
-          });
-        },
-        { threshold: 0.12 }
-      );
-
-      const revealElements = containerRef.current.querySelectorAll(
-        '.home-section .container > *, .home-service-card, .feature-list article'
-      );
-      revealElements.forEach((el) => {
-        el.classList.add('reveal');
-        revealObserver.observe(el);
-      });
-
-      // Counter animation
-      const countObserver = new IntersectionObserver(
-        (entries, observer) => {
-          entries.forEach((entry) => {
-            if (!entry.isIntersecting) return;
-            const counter = entry.target;
-            const target = Number(counter.dataset.count);
-            const startTime = performance.now();
-            const duration = 850;
-
-            const updateCount = (now) => {
-              const progress = Math.min((now - startTime) / duration, 1);
-              counter.textContent = String(Math.round(target * progress));
-              if (progress < 1) {
-                requestAnimationFrame(updateCount);
-              }
-            };
-
-            requestAnimationFrame(updateCount);
-            observer.unobserve(counter);
-          });
-        },
-        { threshold: 0.6 }
-      );
-
-      const counters = containerRef.current.querySelectorAll('[data-count]');
-      counters.forEach((c) => countObserver.observe(c));
-
-      return () => {
-        revealObserver.disconnect();
-        countObserver.disconnect();
-      };
-    }
-
     return () => {
       document.body.className = '';
     };
   }, []);
 
   return (
-    <div ref={containerRef}>
+    <div>
       <DemoBanner />
       <Navbar />
 
@@ -86,306 +29,277 @@ export default function Home() {
         <section id="home" className="home-hero">
           <div className="container home-hero-grid">
             <div className="home-hero-copy">
-              <span className="home-eyebrow">
-                <span></span> A clearer way to manage campus services
-              </span>
-              <h1>
-                Your Campus Services,<br />
-                <span>All in One Place.</span>
-              </h1>
+              <h1>Leave, on-duty, bonafide and appointments, from one student account.</h1>
               <p>
-                Submit college service requests online, keep the details together, and follow each request through its status from your student account.
+                Fill the form for the service you need, attach the supporting file, and submit it to
+                your department. The request then appears in Request status with an ID and the date
+                you sent it, so you can follow the decision without visiting the office.
               </p>
               <div className="home-hero-actions">
                 <Link className="site-button site-button-primary" to="/register">
-                  Get Started <span aria-hidden="true">&rarr;</span>
+                  Create a student account
                 </Link>
-                <a className="site-button site-button-quiet" href="#services">
-                  <span className="play-mark" aria-hidden="true">&#9658;</span> Explore Services
-                </a>
+                <Link className="site-button site-button-quiet" to="/login">
+                  Sign in
+                </Link>
               </div>
-              <div className="hero-assurances" aria-label="Portal highlights">
-                <span>
-                  <i className="fas fa-layer-group" aria-hidden="true"></i> One student account
-                </span>
-                <span>
-                  <i className="fas fa-route" aria-hidden="true"></i> A clear request trail
-                </span>
-              </div>
-            </div>
-
-            <div className="hero-visual" aria-label="Illustration of the student services portal">
-              <div className="visual-orbit orbit-one"></div>
-              <div className="visual-orbit orbit-two"></div>
-              <div className="portal-preview">
-                <div className="preview-topline">
-                  <span className="preview-mark">SS</span>
-                  <span>STUDENT SERVICES</span>
-                  <span className="preview-dots" aria-hidden="true">&bull;&bull;&bull;</span>
-                </div>
-                <div className="preview-content">
-                  <div className="preview-heading">
-                    <div>
-                      <span>REQUEST FLOW PREVIEW</span>
-                      <h2>What can we help with?</h2>
-                    </div>
-                    <span className="live-chip">SAMPLE</span>
-                  </div>
-                  <div className="preview-service-list">
-                    <Link to="/leave">
-                      <span className="preview-number">01</span>
-                      <span>
-                        <strong>Leave request</strong>
-                        <small>Apply for academic leave</small>
-                      </span>
-                      <span className="preview-arrow" aria-hidden="true">&rarr;</span>
-                    </Link>
-                    <Link to="/od">
-                      <span className="preview-number">02</span>
-                      <span>
-                        <strong>On-duty request</strong>
-                        <small>Submit an OD application</small>
-                      </span>
-                      <span className="preview-arrow" aria-hidden="true">&rarr;</span>
-                    </Link>
-                    <Link to="/bonafide">
-                      <span className="preview-number">03</span>
-                      <span>
-                        <strong>Bonafide certificate</strong>
-                        <small>Request an official document</small>
-                      </span>
-                      <span className="preview-arrow" aria-hidden="true">&rarr;</span>
-                    </Link>
-                  </div>
-                  <div className="preview-foot">
-                    <span className="preview-check">
-                      <i className="fas fa-check" aria-hidden="true"></i>
-                    </span>
-                    <span>
-                      <strong>Follow each request through its stages</strong>
-                      <small>
-                        Submitted <span className="flow-separator">/</span> In review <span className="flow-separator">/</span> Decision
-                      </small>
-                    </span>
-                    <Link to="/status" aria-label="Explore request tracking">&rarr;</Link>
-                  </div>
-                </div>
-              </div>
-              <span className="visual-caption">
-                <span></span> A connected student experience
-              </span>
-            </div>
-          </div>
-
-          <div className="container hero-metrics" aria-label="Portal overview">
-            <div>
-              <strong data-count="4">4</strong>
-              <span>request categories</span>
-            </div>
-            <div>
-              <strong data-count="3">3</strong>
-              <span>steps to follow a request</span>
-            </div>
-            <p>One student portal, from submission to status.</p>
-          </div>
-        </section>
-
-        {/* Guided Demo Access on Home */}
-        <section className="container" style={{ margin: '30px auto' }}>
-          <DemoLogin roleFilter="all" />
-        </section>
-
-        <section id="about" className="home-about home-section">
-          <div className="container about-band">
-            <div className="section-kicker">ABOUT THE PORTAL</div>
-            <div className="about-description">
-              <h2>
-                Less paperwork.<br />
-                <span>More room to focus.</span>
-              </h2>
-              <p>
-                Bring everyday student services into one straightforward digital workflow. Submit a request, find it again when you need it, and see its current status without chasing forms across campus.
+              <p className="home-hero-note">
+                Already submitted something?{' '}
+                <Link to="/status">Open Request status</Link> to read the latest remark.
               </p>
             </div>
-            <a className="text-link" href="#how-it-works">
-              See how it works <span aria-hidden="true">&rarr;</span>
-            </a>
+
+            <aside className="notice-board" aria-labelledby="notice-board-title">
+              <div className="notice-board-head">
+                <span className="section-kicker">Notice board</span>
+                <h2 id="notice-board-title">What you can do here</h2>
+              </div>
+              <ul className="notice-list">
+                <li>
+                  <Link to="/leave">
+                    <span className="notice-number">01</span>
+                    <span className="notice-copy">
+                      <strong>Leave application</strong>
+                      <small>Dates, reason, and a medical note if you have one.</small>
+                    </span>
+                    <span className="notice-action">Open</span>
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/od">
+                    <span className="notice-number">02</span>
+                    <span className="notice-copy">
+                      <strong>On-duty request</strong>
+                      <small>Event details and the permission letter.</small>
+                    </span>
+                    <span className="notice-action">Open</span>
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/bonafide">
+                    <span className="notice-number">03</span>
+                    <span className="notice-copy">
+                      <strong>Bonafide certificate</strong>
+                      <small>Purpose and supporting document, issued as a PDF.</small>
+                    </span>
+                    <span className="notice-action">Open</span>
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/complaint">
+                    <span className="notice-number">04</span>
+                    <span className="notice-copy">
+                      <strong>Student complaint</strong>
+                      <small>Category, subject, and a description of the issue.</small>
+                    </span>
+                    <span className="notice-action">Open</span>
+                  </Link>
+                </li>
+                {appointmentsEnabled ? (
+                  <li>
+                    <Link to={appointmentPath}>
+                      <span className="notice-number">05</span>
+                      <span className="notice-copy">
+                        <strong>Appointment</strong>
+                        <small>Faculty, HOD or Principal, with a date and time.</small>
+                      </span>
+                      <span className="notice-action">Open</span>
+                    </Link>
+                  </li>
+                ) : null}
+              </ul>
+              <p className="notice-foot">
+                Sign in to open a service. Your department reviews each request and records the
+                decision in the portal.
+              </p>
+            </aside>
           </div>
         </section>
 
         <section id="services" className="home-services home-section">
           <div className="container">
-            <div className="section-intro">
-              <div>
-                <div className="section-kicker">STUDENT SERVICES</div>
-                <h2>
-                  Campus essentials,<br />
-                  <span>made easier to access.</span>
-                </h2>
-              </div>
-              <p>Choose a service to get started. Sign in to submit requests and see your updates.</p>
+            <div className="section-head">
+              <h2>Services for the requests students make most.</h2>
+              <p>
+                Each service has a short form. Sign in before you start, and the request will appear
+                in Request status after you submit it.
+              </p>
             </div>
-            <div className="home-service-grid">
-              <article className="home-service-card">
-                <span className="service-symbol symbol-cyan">
-                  <i className="fas fa-calendar-check" aria-hidden="true"></i>
-                </span>
-                <span className="service-index">01 / ATTENDANCE</span>
-                <h3>Leave Request</h3>
-                <p>Submit the details of an academic leave request online.</p>
-                <Link to="/leave">
-                  Open service <span aria-hidden="true">&rarr;</span>
+
+            <ol className="service-list">
+              <li className="service-row service-row-lead">
+                <span className="service-number">01</span>
+                <div className="service-copy">
+                  <h3>
+                    <Link to="/leave">Leave application</Link>
+                  </h3>
+                  <p>
+                    Enter the dates and reason for an academic absence. Attach a medical certificate
+                    or other proof if you have one, then submit the request to your department.
+                  </p>
+                </div>
+                <Link className="service-open" to="/leave">
+                  Start a leave request
                 </Link>
-              </article>
-              <article className="home-service-card">
-                <span className="service-symbol symbol-blue">
-                  <i className="fas fa-clipboard-list" aria-hidden="true"></i>
-                </span>
-                <span className="service-index">02 / ACTIVITIES</span>
-                <h3>On-Duty Request</h3>
-                <p>Record an on-duty request for an official event or activity.</p>
-                <Link to="/od">
-                  Open service <span aria-hidden="true">&rarr;</span>
+              </li>
+
+              <li className="service-row">
+                <span className="service-number">02</span>
+                <div className="service-copy">
+                  <h3>
+                    <Link to="/od">On-duty request</Link>
+                  </h3>
+                  <p>
+                    Give the event name, date, location and organizer, and attach the invitation or
+                    permission letter.
+                  </p>
+                </div>
+                <Link className="service-open" to="/od">
+                  Start an on-duty request
                 </Link>
-              </article>
-              <article className="home-service-card">
-                <span className="service-symbol symbol-gold">
-                  <i className="fas fa-file-lines" aria-hidden="true"></i>
-                </span>
-                <span className="service-index">03 / DOCUMENTS</span>
-                <h3>Bonafide Certificate</h3>
-                <p>Request a bonafide certificate for your documentation needs.</p>
-                <Link to="/bonafide">
-                  Open service <span aria-hidden="true">&rarr;</span>
+              </li>
+
+              <li className="service-row">
+                <span className="service-number">03</span>
+                <div className="service-copy">
+                  <h3>
+                    <Link to="/bonafide">Bonafide certificate</Link>
+                  </h3>
+                  <p>
+                    Choose the purpose, from scholarship to bank loan, add any format details, and
+                    attach the supporting document. Approved certificates download as a PDF.
+                  </p>
+                </div>
+                <Link className="service-open" to="/bonafide">
+                  Request a certificate
                 </Link>
-              </article>
-              <article className="home-service-card">
-                <span className="service-symbol symbol-coral">
-                  <i className="fas fa-comment-dots" aria-hidden="true"></i>
-                </span>
-                <span className="service-index">04 / STUDENT VOICE</span>
-                <h3>Student Complaints</h3>
-                <p>Share a concern with the team responsible for reviewing it.</p>
-                <Link to="/complaint">
-                  Open service <span aria-hidden="true">&rarr;</span>
+              </li>
+
+              <li className="service-row">
+                <span className="service-number">04</span>
+                <div className="service-copy">
+                  <h3>
+                    <Link to="/complaint">Student complaint</Link>
+                  </h3>
+                  <p>
+                    Pick a category, write the subject and description, and attach a screenshot or
+                    document if it helps explain the issue.
+                  </p>
+                </div>
+                <Link className="service-open" to="/complaint">
+                  Register a complaint
                 </Link>
-              </article>
+              </li>
+
               {appointmentsEnabled ? (
-                <article className="home-service-card">
-                  <span className="service-symbol symbol-navy">
-                    <i className="fas fa-calendar-check" aria-hidden="true"></i>
-                  </span>
-                  <span className="service-index">05 / APPOINTMENTS</span>
-                  <h3>Appointment Booking</h3>
-                  <p>Book a meeting with your faculty, HOD or Principal.</p>
-                  <Link to={appointmentPath}>
-                    Book an appointment <span aria-hidden="true">&rarr;</span>
+                <li className="service-row">
+                  <span className="service-number">05</span>
+                  <div className="service-copy">
+                    <h3>
+                      <Link to={appointmentPath}>Appointment</Link>
+                    </h3>
+                    <p>
+                      Choose faculty, HOD or Principal, pick a free time on the date you need, and
+                      state what you want to discuss.
+                    </p>
+                  </div>
+                  <Link className="service-open" to={appointmentPath}>
+                    Book an appointment
                   </Link>
-                </article>
+                </li>
               ) : null}
-              <article className="home-service-card service-card-wide">
-                <span className="service-symbol symbol-navy">
-                  <i className="fas fa-arrow-trend-up" aria-hidden="true"></i>
-                </span>
-                <span className="service-index">06 / VISIBILITY</span>
-                <h3>Request Status Tracking</h3>
-                <p>Review submitted requests and follow their current status from your student account.</p>
-                <Link to="/status">
-                  Track a request <span aria-hidden="true">&rarr;</span>
+
+              <li className="service-row">
+                <span className="service-number">{appointmentsEnabled ? '06' : '05'}</span>
+                <div className="service-copy">
+                  <h3>
+                    <Link to="/status">Request status</Link>
+                  </h3>
+                  <p>
+                    Read the latest remark on every request you have submitted and download an
+                    approved Bonafide certificate.
+                  </p>
+                </div>
+                <Link className="service-open" to="/status">
+                  Open Request status
                 </Link>
-              </article>
-            </div>
+              </li>
+            </ol>
           </div>
         </section>
 
         <section id="how-it-works" className="home-process home-section">
+          <span id="features" className="anchor-target" aria-hidden="true"></span>
           <div className="container process-layout">
             <div className="process-intro">
-              <div className="section-kicker">HOW IT WORKS</div>
-              <h2>
-                Three steps.<br />
-                <span>One less thing to chase.</span>
-              </h2>
-              <p>Use your student account to start and follow a service request.</p>
+              <h2>What happens after you submit</h2>
+              <p>
+                Every service follows the same path, so you know where to look for the next update.
+              </p>
             </div>
             <ol className="process-steps">
               <li>
-                <span className="step-number">01</span>
+                <span className="step-number">1</span>
                 <div>
-                  <h3>Sign in to your account</h3>
-                  <p>Register or log in with your student details.</p>
+                  <h3>You fill the form</h3>
+                  <p>Choose the service and add the details your department reviews.</p>
                 </div>
-                <span className="step-line" aria-hidden="true"></span>
               </li>
               <li>
-                <span className="step-number">02</span>
+                <span className="step-number">2</span>
                 <div>
-                  <h3>Submit a service request</h3>
-                  <p>Choose the relevant service and provide its details.</p>
+                  <h3>The request is recorded</h3>
+                  <p>
+                    It appears in Request status with a request ID and the time you submitted it.
+                  </p>
                 </div>
-                <span className="step-line" aria-hidden="true"></span>
               </li>
               <li>
-                <span className="step-number">03</span>
+                <span className="step-number">3</span>
                 <div>
-                  <h3>Track its status</h3>
-                  <p>Return to your requests to see the latest recorded status.</p>
+                  <h3>A decision is added</h3>
+                  <p>
+                    Open the request to read the remark. Approved Bonafide certificates can be
+                    downloaded as a PDF.
+                  </p>
                 </div>
               </li>
             </ol>
           </div>
         </section>
 
-        <section id="features" className="home-features home-section">
+        <section id="about" className="home-about home-section">
+          <div className="container about-band">
+            <div className="about-intro">
+              <h2>A Bonafide certificate can be checked without calling the office.</h2>
+            </div>
+            <div className="about-copy">
+              <p>
+                When a Bonafide request is approved, the portal produces a PDF with a QR code.
+                Anyone who scans it opens a public page that confirms the certificate number,
+                student name, department and issue date.
+              </p>
+              <p>
+                Leave, on-duty, complaints and appointments stay in the same account, so you do not
+                need a different login or a separate form for each service.
+              </p>
+              <Link className="text-link" to="/bonafide">
+                Request a Bonafide certificate
+              </Link>
+            </div>
+          </div>
+        </section>
+
+        <section id="demo" className="home-demo home-section">
           <div className="container">
-            <div className="section-intro feature-intro">
-              <div>
-                <div className="section-kicker">A BETTER SERVICE WORKFLOW</div>
-                <h2>
-                  Designed around<br />
-                  <span>the student experience.</span>
-                </h2>
-              </div>
-              <p>One place to submit common requests and stay oriented as they move through review.</p>
+            <div className="section-head section-head-compact">
+              <h2>Look around with a demo account</h2>
+              <p>
+                Demo data is separate from real student records. You can sign in as a student,
+                faculty member or admin.
+              </p>
             </div>
-            <div className="feature-list">
-              <article>
-                <span className="feature-icon">
-                  <i className="fas fa-pen-to-square" aria-hidden="true"></i>
-                </span>
-                <div>
-                  <h3>Easy request submission</h3>
-                  <p>Dedicated forms keep each service request clear and organized.</p>
-                </div>
-              </article>
-              <article>
-                <span className="feature-icon">
-                  <i className="fas fa-list-check" aria-hidden="true"></i>
-                </span>
-                <div>
-                  <h3>Visible request status</h3>
-                  <p>Check the current recorded status of your submitted requests.</p>
-                </div>
-              </article>
-              <article>
-                <span className="feature-icon">
-                  <i className="fas fa-id-card" aria-hidden="true"></i>
-                </span>
-                <div>
-                  <h3>Student account access</h3>
-                  <p>Register and sign in to use student services and request tracking.</p>
-                </div>
-              </article>
-              <article>
-                <span className="feature-icon">
-                  <i className="fas fa-folder-tree" aria-hidden="true"></i>
-                </span>
-                <div>
-                  <h3>Centralized services</h3>
-                  <p>Find leave, OD, certificate, complaint, appointment booking, and tracking workflows together.</p>
-                </div>
-              </article>
-            </div>
+            <DemoLogin roleFilter="all" />
           </div>
         </section>
       </main>
@@ -399,30 +313,27 @@ export default function Home() {
                 Smart Student <span>Service Portal</span>
               </span>
             </a>
-            <p>Campus services, brought into one place.</p>
+            <p>Campus services for students, faculty and the office that reviews requests.</p>
           </div>
           <div className="footer-column">
             <h2>Explore</h2>
             <a href="#about">About</a>
             <a href="#services">Services</a>
-            <a href="#features">Features</a>
+            <a href="#how-it-works">How it works</a>
+            <a href="#demo">Demo</a>
             <a href="#contact">Contact</a>
           </div>
           <div className="footer-column">
             <h2>Services</h2>
-            <Link to="/leave">Leave request</Link>
+            <Link to="/leave">Leave application</Link>
             <Link to="/od">On-duty request</Link>
             <Link to="/bonafide">Bonafide certificate</Link>
-            <Link to="/status">Request tracking</Link>
+            <Link to="/status">Request status</Link>
           </div>
           <div className="footer-column footer-contact">
             <h2>Contact</h2>
-            <a href="mailto:studentportal@gmail.com">
-              <i className="fas fa-envelope" aria-hidden="true"></i> studentportal@gmail.com
-            </a>
-            <a href="tel:+919876543210">
-              <i className="fas fa-phone" aria-hidden="true"></i> +91 9876543210
-            </a>
+            <a href="mailto:studentportal@gmail.com">studentportal@gmail.com</a>
+            <a href="tel:+919876543210">+91 9876543210</a>
             <Link to="/complaint">Student complaints</Link>
           </div>
         </div>

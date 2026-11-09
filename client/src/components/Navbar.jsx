@@ -15,6 +15,7 @@ export default function Navbar() {
   };
 
   const isHomePage = location.pathname === '/';
+  const isCurrent = (path) => location.pathname === path;
 
   return (
     <header className="site-header">
@@ -34,7 +35,7 @@ export default function Navbar() {
         <nav className="site-nav" aria-label="Main navigation">
           {isHomePage ? (
             <>
-              <a href="#home">Home</a>
+              <a href="#home" aria-current="page">Home</a>
               <a href="#about">About</a>
               <a href="#services">Services</a>
               <a href="#features">Features</a>
@@ -42,10 +43,16 @@ export default function Navbar() {
             </>
           ) : (
             <>
-              <Link to="/">Home</Link>
-              <Link to="/login">Student Login</Link>
-              <Link to="/register">Register</Link>
-              <Link to="/admin-login">Admin Login</Link>
+              <Link to="/" aria-current={isCurrent('/') ? 'page' : undefined}>Home</Link>
+              <Link to="/login" aria-current={isCurrent('/login') ? 'page' : undefined}>
+                Student Login
+              </Link>
+              <Link to="/register" aria-current={isCurrent('/register') ? 'page' : undefined}>
+                Register
+              </Link>
+              <Link to="/admin-login" aria-current={isCurrent('/admin-login') ? 'page' : undefined}>
+                Admin Login
+              </Link>
             </>
           )}
         </nav>
@@ -84,11 +91,15 @@ export default function Navbar() {
           className="mobile-menu"
           aria-label="Mobile navigation"
         >
-          <summary aria-label="Toggle navigation links"></summary>
+          <summary aria-label="Toggle navigation links">
+            <span className="menu-line" aria-hidden="true"></span>
+            <span className="menu-line" aria-hidden="true"></span>
+            <span className="menu-line" aria-hidden="true"></span>
+          </summary>
           <div className="mobile-menu-panel">
             {isHomePage ? (
               <>
-                <a href="#home" onClick={closeMobileMenu}>Home</a>
+                <a href="#home" aria-current="page" onClick={closeMobileMenu}>Home</a>
                 <a href="#about" onClick={closeMobileMenu}>About</a>
                 <a href="#services" onClick={closeMobileMenu}>Services</a>
                 <a href="#features" onClick={closeMobileMenu}>Features</a>

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import NotificationBell from './NotificationBell';
 import { useFeatures } from '../context/FeatureContext';
@@ -8,8 +8,10 @@ export default function StudentHeader({ title = 'Student Dashboard', showNav = t
   const { logout, user } = useAuth();
   const { appointmentsEnabled } = useFeatures();
   const navigate = useNavigate();
+  const location = useLocation();
   const isStaff = ['faculty', 'hod', 'principal'].includes(user?.role);
   const isAdmin = ['admin', 'super_admin', 'demo_admin'].includes(user?.role);
+  const isCurrent = (path) => location.pathname === path;
 
   const handleLogout = () => {
     logout();
@@ -25,35 +27,80 @@ export default function StudentHeader({ title = 'Student Dashboard', showNav = t
         </div>
 
         {showNav ? (
-          <nav className="main-nav">
-            <Link to="/dashboard">Dashboard</Link>
+          <nav className="main-nav" aria-label="Portal navigation">
+            <Link to="/dashboard" aria-current={isCurrent('/dashboard') ? 'page' : undefined}>
+              Dashboard
+            </Link>
             {isStaff ? (
               <>
-                <Link to="/appointments/availability">My availability</Link>
-                <Link to="/appointments/requests">Appointment requests</Link>
-                <Link to="/appointments/today">Today’s schedule</Link>
+                <Link
+                  to="/appointments/availability"
+                  aria-current={isCurrent('/appointments/availability') ? 'page' : undefined}
+                >
+                  My availability
+                </Link>
+                <Link
+                  to="/appointments/requests"
+                  aria-current={isCurrent('/appointments/requests') ? 'page' : undefined}
+                >
+                  Appointment requests
+                </Link>
+                <Link
+                  to="/appointments/today"
+                  aria-current={isCurrent('/appointments/today') ? 'page' : undefined}
+                >
+                  Today’s schedule
+                </Link>
               </>
             ) : isAdmin ? (
               <>
-                <Link to="/appointments/requests">Appointment requests</Link>
-                <Link to="/appointments/today">Today’s schedule</Link>
+                <Link
+                  to="/appointments/requests"
+                  aria-current={isCurrent('/appointments/requests') ? 'page' : undefined}
+                >
+                  Appointment requests
+                </Link>
+                <Link
+                  to="/appointments/today"
+                  aria-current={isCurrent('/appointments/today') ? 'page' : undefined}
+                >
+                  Today’s schedule
+                </Link>
               </>
             ) : (
               <>
                 {appointmentsEnabled ? (
                   <>
-                    <Link to="/appointments/book">Book appointment</Link>
-                    <Link to="/appointments">My appointments</Link>
+                    <Link
+                      to="/appointments/book"
+                      aria-current={isCurrent('/appointments/book') ? 'page' : undefined}
+                    >
+                      Book appointment
+                    </Link>
+                    <Link
+                      to="/appointments"
+                      aria-current={isCurrent('/appointments') ? 'page' : undefined}
+                    >
+                      My appointments
+                    </Link>
                   </>
                 ) : null}
-                <Link to="/status">Status</Link>
-                <Link to="/profile">Profile</Link>
+                <Link to="/status" aria-current={isCurrent('/status') ? 'page' : undefined}>
+                  Status
+                </Link>
+                <Link to="/profile" aria-current={isCurrent('/profile') ? 'page' : undefined}>
+                  Profile
+                </Link>
               </>
             )}
           </nav>
         ) : (
           <div className="nav-actions">
-            <Link className="btn btn-secondary" to="/dashboard">
+            <Link
+              className="btn btn-secondary"
+              to="/dashboard"
+              aria-current={isCurrent('/dashboard') ? 'page' : undefined}
+            >
               Dashboard
             </Link>
           </div>
