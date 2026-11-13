@@ -18,7 +18,7 @@ export default function DemoBanner() {
   return (
     <aside className="demo-banner" role="status">
       <span>
-        <strong>DEMO MODE</strong> — Changes are limited to sample data and may be reset.
+        <strong>DEMO MODE</strong>: Changes are limited to sample data and may be reset.
       </span>
       <button type="button" onClick={handleExit}>
         Exit demo

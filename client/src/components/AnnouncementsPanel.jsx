@@ -21,7 +21,6 @@ export default function AnnouncementsPanel() {
     <section className="card announcements-panel">
       <div className="dashboard-section-heading">
         <div>
-          <span className="section-kicker">ANNOUNCEMENTS</span>
           <h2>Latest announcements</h2>
         </div>
       </div>

@@ -15,6 +15,10 @@ const emptyForm = {
   phone: '',
   role: 'faculty',
   staffDepartment: '',
+  designation: '',
+  officeLocation: '',
+  officeHours: '',
+  meetingTopics: '',
 };
 
 const roles = ['faculty', 'hod', 'principal'];
@@ -85,6 +89,10 @@ export default function StaffManagement() {
             employeeId: form.employeeId,
             role: form.role,
             staffDepartment: form.staffDepartment,
+            designation: form.designation,
+            officeLocation: form.officeLocation,
+            officeHours: form.officeHours,
+            meetingTopics: form.meetingTopics,
           }),
         });
         showToast('Staff account updated');
@@ -117,6 +125,10 @@ export default function StaffManagement() {
       phone: member.phone || '',
       role: member.role,
       staffDepartment: member.staffDepartment || member.department || '',
+      designation: member.designation || '',
+      officeLocation: member.officeLocation || '',
+      officeHours: member.officeHours || '',
+      meetingTopics: member.meetingTopics || '',
     });
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -214,6 +226,34 @@ export default function StaffManagement() {
                   Department {form.role === 'principal' ? '(optional)' : ''}
                   <input value={form.staffDepartment} onChange={(event) => setField('staffDepartment', event.target.value)} maxLength="100" required={form.role !== 'principal'} />
                 </label>
+                <label className="field-wrap">
+                  Designation
+                  <span className="staff-detail-field">
+                    <input value={form.designation} onChange={(event) => setField('designation', event.target.value)} maxLength="80" />
+                    <small className="muted">Up to 80 characters</small>
+                  </span>
+                </label>
+                <label className="field-wrap">
+                  Office
+                  <span className="staff-detail-field">
+                    <input value={form.officeLocation} onChange={(event) => setField('officeLocation', event.target.value)} maxLength="80" />
+                    <small className="muted">Up to 80 characters</small>
+                  </span>
+                </label>
+                <label className="field-wrap">
+                  Office hours
+                  <span className="staff-detail-field">
+                    <input value={form.officeHours} onChange={(event) => setField('officeHours', event.target.value)} maxLength="120" />
+                    <small className="muted">Up to 120 characters</small>
+                  </span>
+                </label>
+                <label className="field-wrap">
+                  Meeting topics
+                  <span className="staff-detail-field">
+                    <input value={form.meetingTopics} onChange={(event) => setField('meetingTopics', event.target.value)} maxLength="160" />
+                    <small className="muted">Up to 160 characters</small>
+                  </span>
+                </label>
               </div>
               <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
                 <button className="btn btn-primary" type="submit" disabled={saving}>
@@ -242,14 +282,16 @@ export default function StaffManagement() {
             <div className="table-wrap">
               <table>
                 <thead>
-                  <tr><th>Name</th><th>Role</th><th>Department</th><th>Employee ID</th><th>Status</th><th>Actions</th></tr>
+                  <tr><th>Name</th><th>Role</th><th>Department</th><th>Designation</th><th>Office</th><th>Employee ID</th><th>Status</th><th>Actions</th></tr>
                 </thead>
                 <tbody>
                   {staff.length ? staff.map((member) => (
                     <tr key={member._id}>
                       <td>{member.name}</td>
                       <td>{member.role}</td>
-                      <td>{member.staffDepartment || member.department || '—'}</td>
+                      <td>{member.staffDepartment || member.department || 'Not set'}</td>
+                      <td>{member.designation || 'Not set'}</td>
+                      <td>{member.officeLocation || 'Not set'}</td>
                       <td>{member.employeeId || member.registerNumber}</td>
                       <td>{member.isActive ? 'Active' : 'Disabled'}</td>
                       <td>
@@ -261,7 +303,7 @@ export default function StaffManagement() {
                       </td>
                     </tr>
                   )) : (
-                    <tr><td colSpan="6" style={{ textAlign: 'center', padding: 20 }}>{loading ? 'Loading staff…' : 'No staff accounts found.'}</td></tr>
+                    <tr><td colSpan="8" style={{ textAlign: 'center', padding: 20 }}>{loading ? 'Loading staff…' : 'No staff accounts found.'}</td></tr>
                   )}
                 </tbody>
               </table>

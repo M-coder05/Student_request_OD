@@ -769,6 +769,16 @@ ol { margin: 0; padding: 0; }
   display: inline-flex;
   min-height: 44px;
   align-items: center;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.service-copy h3 a:hover,
+.service-copy h3 a:focus-visible {
+  color: var(--brand);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
 }
 
 .service-copy p {
@@ -1597,7 +1607,9 @@ ol { margin: 0; padding: 0; }
   font-size: var(--text-sm);
 }
 
-.dashboard-student-section-heading { align-items: baseline; }
+.dashboard-student-section-heading { align-items: start; }
+
+.dashboard-student-section-heading h2 { margin-top: 0; }
 
 .dashboard-student-section-heading > p { color: var(--muted); }
 
@@ -3336,5 +3348,130 @@ tbody tr:hover { background: var(--paper-raised); }
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+.staff-identity {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-1) var(--space-4);
+  margin: var(--space-1) 0 var(--space-4);
+  color: var(--ink-soft);
+  font-size: var(--text-sm);
+  line-height: var(--leading-snug);
+}
+
+.staff-identity-name {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.staff-identity-role {
+  color: var(--brand);
+  font-weight: 600;
+}
+
+.staff-identity-department {
+  color: var(--muted);
+}
+
+.staff-identity-missing {
+  color: var(--muted);
+}
+
+.staff-selection-detail {
+  color: var(--muted);
+  font-size: var(--text-sm);
+  line-height: var(--leading-snug);
+}
+
+/* Staff details and directory */
+.staff-detail-field {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.admin-filters .staff-detail-field small {
+  color: var(--muted);
+  font-size: var(--text-xs);
+}
+
+.staff-selection-detail {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.staff-selection-detail span { display: block; }
+
+.staff-directory { padding: var(--space-5); }
+
+.staff-directory-intro {
+  margin-top: var(--space-2);
+  font-size: var(--text-sm);
+  line-height: var(--leading-body);
+}
+
+.staff-directory-list {
+  margin: var(--space-5) 0 0;
+  padding: 0;
+  border-top: 1px solid var(--rule-strong);
+  list-style: none;
+}
+
+.staff-directory-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: var(--space-4);
+  padding: var(--space-5) 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+.staff-directory-copy {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.staff-directory-copy h3 {
+  font-size: var(--text-md);
+  font-weight: 600;
+}
+
+.staff-directory-copy p {
+  color: var(--muted);
+  font-size: var(--text-sm);
+  line-height: var(--leading-snug);
+}
+
+.staff-directory-copy .staff-directory-designation {
+  color: var(--ink-soft);
+  font-weight: 600;
+}
+
+.staff-directory-book {
+  align-self: center;
+  color: var(--brand);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+  white-space: nowrap;
+}
+
+.staff-directory-book:hover { color: var(--brand-hover); }
+
+.staff-directory-link {
+  display: inline-block;
+  margin-top: var(--space-2);
+}
+
+@media (max-width: 520px) {
+  .staff-directory-item {
+    grid-template-columns: 1fr;
+    gap: var(--space-2);
+  }
+
+  .staff-directory-book { justify-self: start; }
 }
 

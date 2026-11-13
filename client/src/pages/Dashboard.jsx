@@ -37,7 +37,7 @@ export default function Dashboard() {
     { href: '/bonafide', title: 'Bonafide certificate', description: 'Request an official student document.' },
     { href: '/complaint', title: 'Submit a complaint', description: 'Send a concern to the reviewing team.' },
     ...(appointmentsEnabled ? [
-      { href: '/appointments/book', title: 'Book an appointment', description: 'Meet with your Principal, HOD or faculty.' },
+      { href: '/appointments/book', title: 'Appointment service', description: 'Book a meeting with your faculty or HOD.' },
       { href: '/appointments', title: 'My appointments', description: 'Review requests and approved events.' },
     ] : []),
     { href: '/status', title: 'Track requests', description: 'Check the latest status of submitted requests.' },
@@ -136,7 +136,6 @@ export default function Dashboard() {
           <section className="dashboard-overview card">
             <div className="dashboard-section-heading">
               <div>
-                <span className="section-kicker">REQUEST OVERVIEW</span>
                 <h2>Your activity</h2>
               </div>
               {!loading && !error ? (
@@ -168,7 +167,6 @@ export default function Dashboard() {
           <section className="dashboard-services dashboard-services-student card">
             <div className="dashboard-section-heading dashboard-student-section-heading">
               <div>
-                <span className="section-kicker">CAMPUS SERVICES</span>
                 <h2>What would you like to do?</h2>
               </div>
               <p>Choose a service to submit a request or find an update.</p>

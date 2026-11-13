@@ -1,10 +1,12 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { apiRequest } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import DemoBanner from '../components/DemoBanner';
 import StudentHeader from '../components/StudentHeader';
 import ButtonLoader from '../components/ButtonLoader';
+import { staffRoleLabel } from '../components/StaffIdentity';
 
 const todayInKolkata = () => {
   const parts = new Intl.DateTimeFormat('en-CA', {
@@ -31,10 +33,17 @@ export default function BookAppointment() {
   const [loadingStaff, setLoadingStaff] = useState(false);
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [searchParams] = useSearchParams();
+  const preferredStaffIdRef = useRef(searchParams.get('staff') || '');
 
   const department = useMemo(
     () => (staffRole === 'principal' ? '' : user?.department || ''),
     [staffRole, user?.department]
+  );
+
+  const selectedStaff = useMemo(
+    () => staff.find((member) => member._id === staffId),
+    [staff, staffId]
   );
 
   useEffect(() => {
@@ -60,9 +69,16 @@ export default function BookAppointment() {
             : availableRoles
         ));
         setStaff(availableStaff);
-        const nextRole = availableRoles.includes(staffRole) ? staffRole : availableRoles[0] || '';
+        const preferredStaff = preferredStaffIdRef.current
+          ? availableStaff.find((member) => String(member._id) === String(preferredStaffIdRef.current))
+          : null;
+        const nextRole = preferredStaff
+          ? preferredStaff.role
+          : (availableRoles.includes(staffRole) ? staffRole : availableRoles[0] || '');
         setStaffRole(nextRole);
-        setStaffId(availableStaff.find((member) => member.role === nextRole)?._id || '');
+        setStaffId(preferredStaff
+          ? preferredStaff._id
+          : (availableStaff.find((member) => member.role === nextRole)?._id || ''));
       })
       .catch((error) => showToast(error.message || 'Unable to load staff', 'error'))
       .finally(() => {
@@ -123,16 +139,16 @@ export default function BookAppointment() {
       <main className="container form-page">
         <form className="card form-card appointment-card" onSubmit={submit}>
           <h2>Book an appointment</h2>
-          <p className="muted appointment-intro">Choose a Principal/HOD appointment or a faculty meeting.</p>
+          <p className="muted appointment-intro">Choose a staff member, then pick a free time on the date you need.</p>
           <div className="appointment-form">
             <div className="field-wrap">
               {staffRoles.length > 1 ? (
                 <>
                   <label htmlFor="appointmentStaffRole">Appointment with</label>
-                  <select id="appointmentStaffRole" value={staffRole} onChange={(event) => setStaffRole(event.target.value)}>
+                  <select id="appointmentStaffRole" value={staffRole} onChange={(event) => { preferredStaffIdRef.current = ''; setStaffRole(event.target.value); }}>
                     {staffRoles.map((role) => (
                       <option key={role} value={role}>
-                        {role === 'faculty' ? 'Faculty' : role === 'hod' ? 'Head of Department (HOD)' : 'Principal'}
+                        {staffRoleLabel(role)}
                       </option>
                     ))}
                   </select>
@@ -140,7 +156,7 @@ export default function BookAppointment() {
               ) : (
                 <>
                   <label>Appointment with</label>
-                  <span>{staffRoles[0] === 'faculty' ? 'Faculty' : staffRoles[0] === 'hod' ? 'Head of Department (HOD)' : staffRoles[0] === 'principal' ? 'Principal' : 'No roles available'}</span>
+                  <span>{staffRoles.length ? staffRoleLabel(staffRoles[0]) : 'No roles available'}</span>
                 </>
               )}
             </div>
@@ -149,8 +165,30 @@ export default function BookAppointment() {
               <select id="appointmentStaff" value={staffId} onChange={(event) => setStaffId(event.target.value)} disabled={loadingStaff || !staff.length}>
                 {loadingStaff ? <option value="">Loading staff…</option> : null}
                 {!loadingStaff && !staff.length ? <option value="">No staff available</option> : null}
-                {staff.map((member) => <option key={member._id} value={member._id}>{member.department ? `${member.name} (${member.department})` : member.name}</option>)}
+                {staff.map((member) => (
+                  <option key={member._id} value={member._id}>
+                    {member.department ? `${member.name} (${member.department})` : member.name}
+                  </option>
+                ))}
               </select>
+              {selectedStaff ? (
+                <div className="staff-selection-detail">
+                  <span>
+                    {selectedStaff.name} · {staffRoleLabel(selectedStaff.role)}
+                    {selectedStaff.role === 'faculty' || selectedStaff.role === 'hod'
+                      ? (selectedStaff.department
+                        ? ` · Department: ${selectedStaff.department}`
+                        : ' · Department not set')
+                      : ''}
+                  </span>
+                  {selectedStaff.designation ? <span>{selectedStaff.designation}</span> : null}
+                  {selectedStaff.officeLocation ? <span>Office: {selectedStaff.officeLocation}</span> : null}
+                  {selectedStaff.officeHours ? <span>Office hours: {selectedStaff.officeHours}</span> : null}
+                </div>
+              ) : null}
+              <Link className="text-link staff-directory-link" to="/appointments/staff">
+                See all staff details
+              </Link>
             </div>
             <div className="field-wrap">
               <label htmlFor="appointmentDate">Date</label>

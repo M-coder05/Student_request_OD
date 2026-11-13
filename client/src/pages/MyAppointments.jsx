@@ -70,7 +70,15 @@ export default function MyAppointments() {
                     {appointments.map((appointment) => (
                       <tr key={appointment._id}>
                         <td>{appointment.appointmentId}</td>
-                        <td>{appointment.staffName} ({appointment.staffRole})</td>
+                        <td>
+                          {appointment.staffName} ({appointment.staffRole})
+                          {appointment.staffDepartment ? (
+                            <>
+                              <br />
+                              <small className="muted">Department: {appointment.staffDepartment}</small>
+                            </>
+                          ) : null}
+                        </td>
                         <td>{formatDate(appointment.date)}<br />{appointment.startTime}–{appointment.endTime} IST</td>
                         <td>{appointment.purpose}</td>
                         <td><StatusBadge status={appointment.status} /></td>

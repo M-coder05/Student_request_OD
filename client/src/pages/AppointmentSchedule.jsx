@@ -4,6 +4,7 @@ import { useToast } from '../context/ToastContext';
 import DemoBanner from '../components/DemoBanner';
 import StatusBadge from '../components/StatusBadge';
 import StudentHeader from '../components/StudentHeader';
+import StaffIdentity from '../components/StaffIdentity';
 import { formatDate } from '../utils/formatDate';
 
 const todayInKolkata = () => {
@@ -60,6 +61,7 @@ export default function AppointmentSchedule() {
         <div className="container">
           <section className="card staff-page-card">
             <h2>Today’s schedule</h2>
+            <StaffIdentity />
             <p className="muted">{formatDate(todayInKolkata())}</p>
             {loading ? <p>Loading schedule…</p> : null}
             {!loading && !appointments.length ? <p className="muted">No approved appointments today.</p> : null}

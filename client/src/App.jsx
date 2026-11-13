@@ -31,6 +31,7 @@ import MyAvailability from './pages/MyAvailability';
 import AppointmentRequests from './pages/AppointmentRequests';
 import AppointmentSchedule from './pages/AppointmentSchedule';
 import StaffManagement from './pages/StaffManagement';
+import StaffDirectory from './pages/StaffDirectory';
 import SetPassword from './pages/SetPassword';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
@@ -70,6 +71,7 @@ export default function App() {
                   <Route path="/profile" element={<Profile />} />
                   <Route element={<AppointmentBookingGuard />}>
                     <Route path="/appointments/book" element={<BookAppointment />} />
+                    <Route path="/appointments/staff" element={<StaffDirectory />} />
                     <Route path="/appointments" element={<MyAppointments />} />
                   </Route>
                 </Route>

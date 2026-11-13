@@ -91,9 +91,39 @@ const seedDemo = async () => {
   );
 
   const demoStaffSeeds = [
-    { role: 'principal', name: 'Demo Principal', registerNumber: 'DEMO-PRINCIPAL-01', email: 'principal.demo@example.com', staffDepartment: '' },
-    { role: 'hod', name: 'Demo HOD', registerNumber: 'DEMO-HOD-01', email: 'hod.demo@example.com', staffDepartment: student.department },
-    { role: 'faculty', name: 'Demo Faculty', registerNumber: 'DEMO-FACULTY-01', email: 'faculty.demo@example.com', staffDepartment: student.department },
+    {
+      role: 'principal',
+      name: 'Demo Principal',
+      registerNumber: 'DEMO-PRINCIPAL-01',
+      email: 'principal.demo@example.com',
+      staffDepartment: '',
+      designation: 'Principal',
+      officeLocation: 'Administration Block, Room 1',
+      officeHours: 'Mon to Fri, 09:00 to 11:00',
+      meetingTopics: 'Administration, approvals',
+    },
+    {
+      role: 'hod',
+      name: 'Demo HOD',
+      registerNumber: 'DEMO-HOD-01',
+      email: 'hod.demo@example.com',
+      staffDepartment: student.department,
+      designation: 'Head of Department',
+      officeLocation: 'Block A, Room 101',
+      officeHours: 'Tue and Thu, 14:00 to 16:00',
+      meetingTopics: 'Department approvals, academic guidance',
+    },
+    {
+      role: 'faculty',
+      name: 'Demo Faculty',
+      registerNumber: 'DEMO-FACULTY-01',
+      email: 'faculty.demo@example.com',
+      staffDepartment: student.department,
+      designation: 'Assistant Professor',
+      officeLocation: 'Block B, Room 204',
+      officeHours: 'Mon to Fri, 10:00 to 12:00',
+      meetingTopics: 'Projects, internships, study plans',
+    },
   ];
   const demoStaff = await Promise.all(demoStaffSeeds.map((staff) => User.findOneAndUpdate(
     { email: staff.email, isDemo: true },

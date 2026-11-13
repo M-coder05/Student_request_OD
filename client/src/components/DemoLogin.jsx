@@ -134,7 +134,7 @@ export default function DemoLogin({
                     : config?.roles?.student?.email || 'Unavailable'}
                 </code>
               </span>
-              <span>Sample account — no real student records</span>
+              <span>Sample account, no real student records</span>
             </div>
             <button
               className="btn btn-secondary"
@@ -159,7 +159,7 @@ export default function DemoLogin({
                     : config?.roles?.admin?.email || 'Unavailable'}
                 </code>
               </span>
-              <span>Sample account — changes may reset</span>
+              <span>Sample account, changes may reset</span>
             </div>
             <button
               className="btn btn-secondary"
@@ -184,7 +184,7 @@ export default function DemoLogin({
                     : config?.roles?.faculty?.email || 'Unavailable'}
                 </code>
               </span>
-              <span>Sample account — changes may reset</span>
+              <span>Sample account, changes may reset</span>
             </div>
             <button
               className="btn btn-secondary"

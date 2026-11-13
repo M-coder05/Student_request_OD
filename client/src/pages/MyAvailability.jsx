@@ -3,6 +3,7 @@ import { apiRequest } from '../api/client';
 import { useToast } from '../context/ToastContext';
 import DemoBanner from '../components/DemoBanner';
 import StudentHeader from '../components/StudentHeader';
+import StaffIdentity from '../components/StaffIdentity';
 
 const WEEKDAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const defaultAvailability = () => WEEKDAYS.map((_, weekday) => ({
@@ -131,6 +132,7 @@ export default function MyAvailability() {
             <header className="availability-heading">
               <div>
                 <h2>Weekly availability</h2>
+                <StaffIdentity />
                 <p>Students can only book the days and times you set here.</p>
               </div>
               <button className="btn btn-secondary" type="button" onClick={copyMondayToWeekdays} disabled={loading || saving}>

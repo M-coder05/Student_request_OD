@@ -1,4 +1,5 @@
 import React, { useCallback, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { apiRequest } from '../api/client';
 import { useToast } from '../context/ToastContext';
 import DemoBanner from '../components/DemoBanner';
@@ -8,6 +9,7 @@ import { formatDate } from '../utils/formatDate';
 import Skeleton from '../components/Skeleton';
 import LoadError from '../components/LoadError';
 import ButtonLoader from '../components/ButtonLoader';
+import StaffIdentity from '../components/StaffIdentity';
 import useLoading from '../hooks/useLoading';
 
 export default function AppointmentRequests() {
@@ -73,6 +75,7 @@ export default function AppointmentRequests() {
         <div className="container">
           <section className="card staff-page-card">
             <h2>Appointment requests</h2>
+            <StaffIdentity />
             {error ? <LoadError message={error} onRetry={retry} /> : null}
             {loading ? (
               <div className="table-wrap">
@@ -101,11 +104,19 @@ export default function AppointmentRequests() {
                 </div>
                 {!visibleAppointments.length ? (
                   <p className="muted">
-                    {selectedTab === 'All'
-                      ? 'No appointment requests yet. Student bookings will appear here.'
-                      : selectedTab === 'Pending'
-                        ? 'No pending requests.'
-                        : 'No approved appointments.'}
+                    {selectedTab === 'All' ? (
+                      <>
+                        No appointment requests yet. Students can book you once you set your
+                        availability.{' '}
+                        <Link className="text-link" to="/appointments/availability">
+                          Set my availability
+                        </Link>
+                      </>
+                    ) : selectedTab === 'Pending' ? (
+                      'No pending requests.'
+                    ) : (
+                      'No approved appointments.'
+                    )}
                   </p>
                 ) : (
                   <div className="table-wrap">

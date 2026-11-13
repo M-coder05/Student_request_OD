@@ -29,7 +29,11 @@ export default function Home() {
         <section id="home" className="home-hero">
           <div className="container home-hero-grid">
             <div className="home-hero-copy">
-              <h1>Leave, on-duty, bonafide and appointments, from one student account.</h1>
+              <h1>
+                {appointmentsEnabled
+                  ? 'Leave, on-duty, bonafide and appointments, from one student account.'
+                  : 'Leave, on-duty, bonafide and complaint requests, from one student account.'}
+              </h1>
               <p>
                 Fill the form for the service you need, attach the supporting file, and submit it to
                 your department. The request then appears in Request status with an ID and the date
@@ -100,8 +104,8 @@ export default function Home() {
                     <Link to={appointmentPath}>
                       <span className="notice-number">05</span>
                       <span className="notice-copy">
-                        <strong>Appointment</strong>
-                        <small>Faculty, HOD or Principal, with a date and time.</small>
+                        <strong>Appointment service</strong>
+                        <small>Book a meeting with your faculty or HOD.</small>
                       </span>
                       <span className="notice-action">Open</span>
                     </Link>
@@ -196,11 +200,11 @@ export default function Home() {
                   <span className="service-number">05</span>
                   <div className="service-copy">
                     <h3>
-                      <Link to={appointmentPath}>Appointment</Link>
+                      <Link to={appointmentPath}>Appointment service</Link>
                     </h3>
                     <p>
-                      Choose faculty, HOD or Principal, pick a free time on the date you need, and
-                      state what you want to discuss.
+                      Choose your faculty or HOD, pick a free time on the date you need, and state
+                      what you want to discuss.
                     </p>
                   </div>
                   <Link className="service-open" to={appointmentPath}>

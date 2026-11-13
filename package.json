@@ -8,6 +8,7 @@
     "dev": "nodemon backend/server.js",
     "test:email": "node test-email.js",
     "test:email-validation": "node backend/scripts/testEmailValidation.js",
+    "test:staff-details": "node backend/scripts/testStaffDetails.js",
     "test:password-reset": "node backend/scripts/testPasswordResetMongo.js",
     "test:request-attachments": "node backend/scripts/testRequestAttachmentsMongo.js",
     "test:e2e": "playwright test",

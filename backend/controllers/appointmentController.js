@@ -125,7 +125,7 @@ const getBookableStaff = async (req, res) => {
     ];
   }
   const staff = await User.find(filter)
-    .select('name department staffDepartment role')
+    .select('name department staffDepartment role designation officeLocation officeHours meetingTopics')
     .sort({ role: 1, name: 1 });
   const activeStaffIds = staff.length
     ? await Availability.distinct('staffId', {
@@ -138,13 +138,16 @@ const getBookableStaff = async (req, res) => {
     roles: bookableRoles,
     staff: staff
       .filter((member) => activeStaff.has(String(member._id)))
-      .map((member) => {
-        const staffMember = typeof member.toObject === 'function' ? member.toObject() : member;
-        return {
-          ...staffMember,
-          department: member.staffDepartment || member.department || '',
-        };
-      }),
+      .map((member) => ({
+        _id: member._id,
+        name: member.name,
+        role: member.role,
+        department: member.staffDepartment || member.department || '',
+        designation: member.designation || '',
+        officeLocation: member.officeLocation || '',
+        officeHours: member.officeHours || '',
+        meetingTopics: member.meetingTopics || '',
+      })),
   });
 };
 
@@ -320,7 +323,25 @@ const getMyAppointments = async (req, res) => {
     studentId: req.user._id,
     isDemo: req.user.isDemo === true,
   }).sort({ date: -1, startTime: -1 });
-  return res.status(200).json({ appointments });
+  const uniqueStaffIds = [...new Set(
+    appointments
+      .map((appointment) => appointment.staffId)
+      .filter(Boolean)
+      .map((staffId) => String(staffId))
+  )];
+  const staffMembers = await User.find({ _id: { $in: uniqueStaffIds } })
+    .select('name department staffDepartment');
+  const staffById = new Map(staffMembers.map((staff) => [String(staff._id), staff]));
+  const enrichedAppointments = appointments.map((appointment) => {
+    const record = typeof appointment.toObject === 'function' ? appointment.toObject() : { ...appointment };
+    const staff = staffById.get(String(appointment.staffId));
+    return {
+      ...record,
+      staffName: staff?.name || appointment.staffName,
+      staffDepartment: staff ? (staff.staffDepartment || staff.department || '') : '',
+    };
+  });
+  return res.status(200).json({ appointments: enrichedAppointments });
 };
 
 const cancelAppointment = async (req, res) => {

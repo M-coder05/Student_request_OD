@@ -27,6 +27,10 @@ Smart Student Service Portal is a modern full-stack web application designed to 
 - **Guided Demo Mode:** One-click demo access for recruiters and reviewers with isolated student and administrator sample sessions.
 - **Security & Performance:** Express rate limiting, Helmet Content Security Policy (CSP), CORS protection, and SPA client routing fallbacks.
 
+## Staff details and appointments
+
+When appointment booking is enabled, students can open **Appointment service** from the dashboard or the home page, review each staff member's designation, office, office hours and meeting topics in the staff directory, and book a free slot. Super admins can maintain those details from Staff management; every field is optional and limited to plain text.
+
 ---
 
 ## Tech Stack

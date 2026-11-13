@@ -13,6 +13,7 @@ const crypto = require('crypto');
 const bcrypt = require('bcryptjs');
 const generateTemporaryPassword = require('../utils/generateTemporaryPassword');
 const isValidEmail = require('../utils/isValidEmail');
+const { validateStaffDetails } = require('../utils/staffDetails');
 
 const isDemoAdmin = (user) => user.role === 'demo_admin' && user.isDemo === true;
 const STAFF_ROLES = ['faculty', 'hod', 'principal'];
@@ -79,6 +80,10 @@ const publicStaffAccount = (staff) => ({
   role: staff.role,
   department: staff.staffDepartment || staff.department || '',
   staffDepartment: staff.staffDepartment || '',
+  designation: staff.designation || '',
+  officeLocation: staff.officeLocation || '',
+  officeHours: staff.officeHours || '',
+  meetingTopics: staff.meetingTopics || '',
   isActive: staff.isActive !== false,
   mustChangePassword: staff.mustChangePassword === true,
   createdAt: staff.createdAt,
@@ -590,6 +595,8 @@ const updateRequestStatus = async (req, res) => {
 const createStaffAccount = async (req, res) => {
   const { clean, error } = validateStaffFields(req.body || {});
   if (error) return res.status(400).json({ message: error });
+  const { value: staffDetails, error: staffDetailsError } = validateStaffDetails(req.body || {});
+  if (staffDetailsError) return res.status(400).json({ message: staffDetailsError });
 
   const duplicate = await User.exists({
     $or: [
@@ -604,6 +611,7 @@ const createStaffAccount = async (req, res) => {
   let staff;
   try {
     staff = await User.create({
+      ...staffDetails,
       name: clean.name,
       registerNumber: clean.employeeId,
       email: clean.email,
@@ -714,6 +722,8 @@ const updateStaffAccount = async (req, res) => {
   };
   const { clean, error } = validateStaffFields(fields, { partial: true });
   if (error) return res.status(400).json({ message: error });
+  const { value: staffDetails, error: staffDetailsError } = validateStaffDetails(input);
+  if (staffDetailsError) return res.status(400).json({ message: staffDetailsError });
   if (
     String(staff._id) === String(req.user._id) &&
     clean.role !== undefined &&
@@ -743,6 +753,10 @@ const updateStaffAccount = async (req, res) => {
     changedFields.push('department');
   } else if (staff.staffDepartment && !staff.department) {
     staff.department = staff.staffDepartment;
+  }
+  for (const [field, fieldValue] of Object.entries(staffDetails)) {
+    staff[field] = fieldValue;
+    changedFields.push(field);
   }
 
   try {
