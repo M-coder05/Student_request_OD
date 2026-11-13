@@ -3475,3 +3475,122 @@ tbody tr:hover { background: var(--paper-raised); }
   .staff-directory-book { justify-self: start; }
 }
 
+/* Size bump: service lists */
+/* Overrides only: slightly larger text, roomier rows and 44px tap targets
+   for the Home notice board, Home services and student dashboard rows. */
+
+.notice-list a {
+  min-height: 64px;
+  padding-block: var(--space-4);
+}
+
+.notice-number {
+  font-size: var(--text-sm);
+}
+
+.notice-copy strong {
+  font-size: var(--text-base);
+}
+
+.notice-copy small {
+  font-size: var(--text-base);
+  line-height: var(--leading-body);
+}
+
+.notice-action {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  font-size: var(--text-sm);
+}
+
+.service-row {
+  padding-block: calc(var(--space-5) + var(--space-1));
+}
+
+.service-row-lead {
+  padding-block: calc(var(--space-6) + var(--space-1));
+}
+
+.service-number {
+  font-size: var(--text-sm);
+}
+
+.service-copy h3 {
+  font-size: 1.4rem;
+}
+
+.service-row-lead .service-copy h3 {
+  font-size: 1.9rem;
+}
+
+.service-copy p {
+  font-size: var(--text-base);
+  line-height: var(--leading-body);
+}
+
+.service-open {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  font-size: var(--text-base);
+}
+
+.dashboard-service-link {
+  min-height: 80px;
+  padding-block: 0.875rem;
+}
+
+.dashboard-service-number {
+  font-size: var(--text-sm);
+}
+
+.dashboard-service-copy strong {
+  font-size: var(--text-base);
+}
+
+.dashboard-service-copy small {
+  font-size: var(--text-base);
+  line-height: var(--leading-body);
+}
+
+.dashboard-service-arrow {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-content: flex-end;
+  font-size: 1.375rem;
+}
+
+@media (max-width: 520px) {
+  .notice-list a {
+    padding-block: var(--space-3);
+  }
+
+  .service-row,
+  .service-row-lead {
+    padding-block: var(--space-4);
+  }
+
+  .service-copy h3 {
+    font-size: var(--text-md);
+  }
+
+  .service-row-lead .service-copy h3 {
+    font-size: 1.5rem;
+  }
+
+  .service-open {
+    font-size: var(--text-sm);
+  }
+
+  .dashboard-service-link {
+    min-height: 72px;
+    padding-block: var(--space-3);
+  }
+
+  .dashboard-service-arrow {
+    font-size: var(--text-md);
+  }
+}
+
