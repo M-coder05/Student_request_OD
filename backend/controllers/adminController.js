@@ -14,6 +14,7 @@ const bcrypt = require('bcryptjs');
 const generateTemporaryPassword = require('../utils/generateTemporaryPassword');
 const isValidEmail = require('../utils/isValidEmail');
 const { validateStaffDetails } = require('../utils/staffDetails');
+const { normalizeDepartment } = require('../utils/departments');
 
 const isDemoAdmin = (user) => user.role === 'demo_admin' && user.isDemo === true;
 const STAFF_ROLES = ['faculty', 'hod', 'principal'];
@@ -28,7 +29,7 @@ const validateStaffFields = (fields, { partial = false } = {}) => {
   }
   if (fields.staffDepartment !== undefined) {
     if (typeof fields.staffDepartment !== 'string') return { error: 'staffDepartment must be a string' };
-    clean.staffDepartment = fields.staffDepartment.trim();
+    clean.staffDepartment = normalizeDepartment(fields.staffDepartment);
   } else if (!partial && fields.role !== 'principal') {
     return { error: 'staffDepartment is required for faculty and HOD accounts' };
   }

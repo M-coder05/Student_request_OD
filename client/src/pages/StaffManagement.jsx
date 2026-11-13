@@ -7,6 +7,7 @@ import DemoBanner from '../components/DemoBanner';
 import NotificationBell from '../components/NotificationBell';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
+import { DEPARTMENT_CODES, normalizeDepartment } from '../constants/departments';
 
 const emptyForm = {
   name: '',
@@ -124,7 +125,7 @@ export default function StaffManagement() {
       employeeId: member.employeeId || member.registerNumber || '',
       phone: member.phone || '',
       role: member.role,
-      staffDepartment: member.staffDepartment || member.department || '',
+      staffDepartment: normalizeDepartment(member.staffDepartment || member.department || ''),
       designation: member.designation || '',
       officeLocation: member.officeLocation || '',
       officeHours: member.officeHours || '',
@@ -224,7 +225,15 @@ export default function StaffManagement() {
                 </label>
                 <label className="field-wrap">
                   Department {form.role === 'principal' ? '(optional)' : ''}
-                  <input value={form.staffDepartment} onChange={(event) => setField('staffDepartment', event.target.value)} maxLength="100" required={form.role !== 'principal'} />
+                  <select value={form.staffDepartment} onChange={(event) => setField('staffDepartment', event.target.value)} required={form.role !== 'principal'}>
+                    <option value="">Select department</option>
+                    {DEPARTMENT_CODES.map((code) => (
+                      <option key={code} value={code}>{code}</option>
+                    ))}
+                    {form.staffDepartment && !DEPARTMENT_CODES.includes(form.staffDepartment) ? (
+                      <option value={form.staffDepartment}>{form.staffDepartment}</option>
+                    ) : null}
+                  </select>
                 </label>
                 <label className="field-wrap">
                   Designation

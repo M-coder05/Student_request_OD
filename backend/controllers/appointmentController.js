@@ -7,6 +7,7 @@ const User = require('../models/User');
 const AuditLog = require('../models/AuditLog');
 const notifyUser = require('../utils/notifyUser');
 const { getBookableAppointmentRoles } = require('../config/featureFlags');
+const { sameDepartment } = require('../utils/departments');
 const {
   addDays,
   isValidDate,
@@ -117,13 +118,7 @@ const getBookableStaff = async (req, res) => {
     isActive: { $ne: false },
     isDemo: req.user.isDemo === true,
   };
-  if (typeof department === 'string' && department.trim()) {
-    filter.$or = [
-      { staffDepartment: department.trim() },
-      { staffDepartment: { $in: ['', null] }, department: department.trim() },
-      { role: 'principal' },
-    ];
-  }
+  const requestedDepartment = typeof department === 'string' ? department.trim() : '';
   const staff = await User.find(filter)
     .select('name department staffDepartment role designation officeLocation officeHours meetingTopics')
     .sort({ role: 1, name: 1 });
@@ -137,7 +132,12 @@ const getBookableStaff = async (req, res) => {
   return res.status(200).json({
     roles: bookableRoles,
     staff: staff
-      .filter((member) => activeStaff.has(String(member._id)))
+      .filter((member) => {
+        if (!activeStaff.has(String(member._id))) return false;
+        if (!requestedDepartment) return true;
+        if (member.role === 'principal') return true;
+        return sameDepartment(member.staffDepartment || member.department, requestedDepartment);
+      })
       .map((member) => ({
         _id: member._id,
         name: member.name,
@@ -255,7 +255,7 @@ const createAppointment = async (req, res) => {
     return res.status(400).json({ message: 'That role is not available for booking' });
   }
   const staffDepartment = staff.staffDepartment || staff.department || '';
-  if (staff.role !== 'principal' && staffDepartment !== req.user.department) {
+  if (staff.role !== 'principal' && !sameDepartment(staffDepartment, req.user.department)) {
     return res.status(403).json({ message: 'You can only book staff in your department' });
   }
   if (staff.role === 'principal' && cleanPurpose.length < getPrincipalPurposeLength()) {

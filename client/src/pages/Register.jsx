@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import DemoBanner from '../components/DemoBanner';
 import PasswordInput from '../components/PasswordInput';
+import { DEPARTMENT_CODES } from '../constants/departments';
 
 export default function Register() {
   const [formData, setFormData] = useState({
@@ -187,13 +188,9 @@ export default function Register() {
                   disabled={loading}
                 >
                   <option value="">Select department</option>
-                  <option value="Computer Science">Computer Science</option>
-                  <option value="Information Technology">Information Technology</option>
-                  <option value="Electronics & Communication">Electronics & Communication</option>
-                  <option value="Mechanical">Mechanical</option>
-                  <option value="Civil">Civil</option>
-                  <option value="Electrical">Electrical</option>
-                  <option value="MBA">MBA</option>
+                  {DEPARTMENT_CODES.map((code) => (
+                    <option key={code} value={code}>{code}</option>
+                  ))}
                 </select>
               </div>
               <div className="field-wrap">

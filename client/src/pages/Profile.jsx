@@ -5,6 +5,7 @@ import { useToast } from '../context/ToastContext';
 import StudentHeader from '../components/StudentHeader';
 import DemoBanner from '../components/DemoBanner';
 import PasswordInput from '../components/PasswordInput';
+import { DEPARTMENT_CODES, normalizeDepartment } from '../constants/departments';
 
 export default function Profile() {
   const { user, updateUser, updateToken } = useAuth();
@@ -46,7 +47,7 @@ export default function Profile() {
           registerNumber: u.registerNumber || '',
           email: u.email || '',
           phone: u.phone || '',
-          department: u.department || '',
+          department: normalizeDepartment(u.department || ''),
           year: u.year || '',
           semester: String(u.semester || ''),
         });
@@ -226,13 +227,12 @@ export default function Profile() {
                       disabled={savingProfile}
                     >
                       <option value="">Select Department</option>
-                      <option value="Computer Science">Computer Science</option>
-                      <option value="Information Technology">Information Technology</option>
-                      <option value="Electronics & Communication">Electronics & Communication</option>
-                      <option value="Mechanical">Mechanical</option>
-                      <option value="Civil">Civil</option>
-                      <option value="Electrical">Electrical</option>
-                      <option value="MBA">MBA</option>
+                      {DEPARTMENT_CODES.map((code) => (
+                        <option key={code} value={code}>{code}</option>
+                      ))}
+                      {profileData.department && !DEPARTMENT_CODES.includes(profileData.department) ? (
+                        <option value={profileData.department}>{profileData.department}</option>
+                      ) : null}
                     </select>
                   </div>
                   <div className="field-wrap">

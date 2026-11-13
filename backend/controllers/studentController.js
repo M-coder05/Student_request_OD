@@ -8,6 +8,7 @@ const Complaint = require('../models/Complaint');
 const { isDemoUser } = require('../config/demo');
 const getRequestStatusCounts = require('../utils/requestStats');
 const isValidEmail = require('../utils/isValidEmail');
+const { normalizeDepartment } = require('../utils/departments');
 
 const serializeUser = (user) => ({
   id: user._id,
@@ -38,7 +39,7 @@ const updateStudentProfile = async (req, res) => {
     name: typeof name === 'string' ? name.trim() : '',
     email: typeof email === 'string' ? email.trim().toLowerCase() : '',
     phone: typeof phone === 'string' ? phone.trim() : '',
-    department: typeof department === 'string' ? department.trim() : '',
+    department: normalizeDepartment(department),
     year: typeof year === 'string' ? year.trim() : '',
     semester: typeof semester === 'string' ? semester.trim() : '',
   };

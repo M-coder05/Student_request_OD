@@ -1,5 +1,6 @@
 const PDFDocument = require('pdfkit');
 const QRCode = require('qrcode');
+const { departmentFullName } = require('./departments');
 
 const createPdfBuffer = (document) => new Promise((resolve, reject) => {
   const chunks = [];
@@ -119,12 +120,12 @@ const generateBonafidePdf = async (request, { demo = false } = {}) => {
   const rightX = pageWidth / 2 + 5;
   drawDetail(doc, 'Student Name', request.studentName, leftX, 231, detailColumnWidth);
   drawDetail(doc, 'Register Number', request.registerNumber, rightX, 231, detailColumnWidth);
-  drawDetail(doc, 'Department', request.department, leftX, 283, detailColumnWidth);
+  drawDetail(doc, 'Department', departmentFullName(request.department), leftX, 283, detailColumnWidth);
   drawDetail(doc, 'Year', request.year, rightX, 283, detailColumnWidth);
   drawDetail(doc, 'Semester', request.semester, leftX, 335, detailColumnWidth);
 
   const purposeText = String(request.purpose || '').trim();
-  const certificateText = `This is to certify that ${request.studentName || ''} is a bonafide student of the Department of ${request.department || ''}. This certificate is issued for the purpose of ${purposeText}.`;
+  const certificateText = `This is to certify that ${request.studentName || ''} is a bonafide student of the Department of ${departmentFullName(request.department) || ''}. This certificate is issued for the purpose of ${purposeText}.`;
   fitText(doc, certificateText, {
     x: 82,
     y: 385,

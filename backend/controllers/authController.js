@@ -13,6 +13,7 @@ const {
   isDemoModeEnabled,
 } = require('../config/demo');
 const isValidEmail = require('../utils/isValidEmail');
+const { normalizeDepartment } = require('../utils/departments');
 
 const FORGOT_PASSWORD_MESSAGE = 'If an account matches, your request has been recorded';
 const RESET_TOKEN_ERROR = 'Invalid or expired reset token';
@@ -66,7 +67,7 @@ const registerUser = async (req, res) => {
   registerNumber = typeof registerNumber === 'string' ? registerNumber.trim() : '';
   email = typeof email === 'string' ? email.trim().toLowerCase() : '';
   phone = typeof phone === 'string' ? phone.trim() : '';
-  department = typeof department === 'string' ? department.trim() : '';
+  department = normalizeDepartment(department);
   year = typeof year === 'string' ? year.trim() : '';
   semester = typeof semester === 'string' ? semester.trim() : '';
 
