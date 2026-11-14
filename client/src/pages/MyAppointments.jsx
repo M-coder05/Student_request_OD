@@ -5,6 +5,7 @@ import DemoBanner from '../components/DemoBanner';
 import StatusBadge from '../components/StatusBadge';
 import StudentHeader from '../components/StudentHeader';
 import { formatDate } from '../utils/formatDate';
+import { staffTitleLabel } from '../components/StaffIdentity';
 
 const ACTIVE_STATUSES = ['Pending', 'Approved', 'Rescheduled'];
 
@@ -71,7 +72,7 @@ export default function MyAppointments() {
                       <tr key={appointment._id}>
                         <td>{appointment.appointmentId}</td>
                         <td>
-                          {appointment.staffName} ({appointment.staffRole})
+                          {appointment.staffName} ({staffTitleLabel(appointment.staffRole, appointment.staffDesignation)})
                           {appointment.staffDepartment ? (
                             <>
                               <br />

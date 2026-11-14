@@ -349,7 +349,7 @@ const getMyAppointments = async (req, res) => {
       .map((staffId) => String(staffId))
   )];
   const staffMembers = await User.find({ _id: { $in: uniqueStaffIds } })
-    .select('name department staffDepartment');
+    .select('name department staffDepartment designation');
   const staffById = new Map(staffMembers.map((staff) => [String(staff._id), staff]));
   const enrichedAppointments = appointments.map((appointment) => {
     const record = typeof appointment.toObject === 'function' ? appointment.toObject() : { ...appointment };
@@ -358,6 +358,7 @@ const getMyAppointments = async (req, res) => {
       ...record,
       staffName: staff?.name || appointment.staffName,
       staffDepartment: staff ? (staff.staffDepartment || staff.department || '') : '',
+      staffDesignation: staff ? (staff.designation || '') : '',
     };
   });
   return res.status(200).json({ appointments: enrichedAppointments });

@@ -19,12 +19,17 @@ export const staffRoleLabel = (role) => {
   return role.replace(/_/g, ' ');
 };
 
+export const staffTitleLabel = (role, designation) => {
+  if (typeof designation === 'string' && designation.trim()) return designation.trim();
+  return staffRoleLabel(role);
+};
+
 export default function StaffIdentity() {
   const { user } = useAuth();
 
   if (!user) return null;
 
-  const roleLabel = staffRoleLabel(user.role);
+  const roleLabel = staffTitleLabel(user.role, user.designation);
   const department = displayDepartment(user.staffDepartment || user.department || '');
   const showDepartment = DEPARTMENT_ROLES.includes(user.role);
 

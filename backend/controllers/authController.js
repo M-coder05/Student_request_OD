@@ -46,6 +46,7 @@ const serializeUser = (user) => ({
   year: user.year,
   semester: user.semester,
   role: user.role,
+  designation: user.designation || '',
   demo: user.isDemo === true,
   mustChangePassword: user.mustChangePassword === true,
 });
