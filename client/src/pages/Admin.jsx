@@ -13,6 +13,7 @@ import NotificationBell from '../components/NotificationBell';
 import Skeleton from '../components/Skeleton';
 import LoadError from '../components/LoadError';
 import RequestAttachments from '../components/RequestAttachments';
+import { displayDepartment } from '../constants/departments';
 
 export default function Admin() {
   const { logout, user } = useAuth();
@@ -388,7 +389,7 @@ export default function Admin() {
                         <td>{student.name}</td>
                         <td>{student.registerNumber}</td>
                         <td>{student.email}</td>
-                        <td>{student.department}</td>
+                        <td>{displayDepartment(student.department)}</td>
                         <td>{student.year}</td>
                         <td>{student.semester}</td>
                       </tr>
@@ -734,7 +735,7 @@ export default function Admin() {
               </div>
               <div>
                 <small className="muted">Department</small>
-                <div>{selectedRequest.department || '--'}</div>
+                <div>{displayDepartment(selectedRequest.department) || '--'}</div>
               </div>
               <div>
                 <small className="muted">Submitted On</small>

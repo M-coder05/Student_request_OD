@@ -74,3 +74,5 @@ export const departmentFullName = (value) => {
 };
 
 export const DEPARTMENT_CODES = DEPARTMENTS.map((department) => department.code);
+
+export const displayDepartment = (value) => normalizeDepartment(value) || '';

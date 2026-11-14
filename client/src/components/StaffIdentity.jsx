@@ -1,5 +1,6 @@
 import React from 'react';
 import { useAuth } from '../context/AuthContext';
+import { displayDepartment } from '../constants/departments';
 
 const ROLE_LABELS = {
   faculty: 'Faculty',
@@ -24,7 +25,7 @@ export default function StaffIdentity() {
   if (!user) return null;
 
   const roleLabel = staffRoleLabel(user.role);
-  const department = (user.staffDepartment || user.department || '').trim();
+  const department = displayDepartment(user.staffDepartment || user.department || '');
   const showDepartment = DEPARTMENT_ROLES.includes(user.role);
 
   return (

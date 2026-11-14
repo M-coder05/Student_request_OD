@@ -7,6 +7,7 @@ import DemoBanner from '../components/DemoBanner';
 import StudentHeader from '../components/StudentHeader';
 import ButtonLoader from '../components/ButtonLoader';
 import { staffRoleLabel } from '../components/StaffIdentity';
+import { displayDepartment } from '../constants/departments';
 
 const todayInKolkata = () => {
   const parts = new Intl.DateTimeFormat('en-CA', {
@@ -167,7 +168,7 @@ export default function BookAppointment() {
                 {!loadingStaff && !staff.length ? <option value="">No staff available</option> : null}
                 {staff.map((member) => (
                   <option key={member._id} value={member._id}>
-                    {member.department ? `${member.name} (${member.department})` : member.name}
+                    {member.department ? `${member.name} (${displayDepartment(member.department)})` : member.name}
                   </option>
                 ))}
               </select>
@@ -177,7 +178,7 @@ export default function BookAppointment() {
                     {selectedStaff.name} · {staffRoleLabel(selectedStaff.role)}
                     {selectedStaff.role === 'faculty' || selectedStaff.role === 'hod'
                       ? (selectedStaff.department
-                        ? ` · Department: ${selectedStaff.department}`
+                        ? ` · Department: ${displayDepartment(selectedStaff.department)}`
                         : ' · Department not set')
                       : ''}
                   </span>

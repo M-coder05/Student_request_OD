@@ -9,6 +9,7 @@ import LoadError from '../components/LoadError';
 import useLoading from '../hooks/useLoading';
 import { useFeatures } from '../context/FeatureContext';
 import AnnouncementsPanel from '../components/AnnouncementsPanel';
+import { displayDepartment } from '../constants/departments';
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -83,7 +84,7 @@ export default function Dashboard() {
                 <p>Manage your student appointments and availability.</p>
               </div>
               <div className="profile-summary">
-                <span>Department: {user?.department || 'Not set'}</span>
+                <span>Department: {displayDepartment(user?.department) || 'Not set'}</span>
               </div>
             </section>
             <section className="dashboard-services card">
@@ -126,7 +127,7 @@ export default function Dashboard() {
             </div>
             <div className="profile-summary">
               <span>Reg No: {user?.registerNumber || '--'}</span>
-              <span>Dept: {user?.department || '--'}</span>
+              <span>Dept: {displayDepartment(user?.department) || '--'}</span>
               <span>Year: {user?.year || '--'}</span>
             </div>
           </section>

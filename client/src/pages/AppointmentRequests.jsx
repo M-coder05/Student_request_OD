@@ -11,6 +11,7 @@ import LoadError from '../components/LoadError';
 import ButtonLoader from '../components/ButtonLoader';
 import StaffIdentity from '../components/StaffIdentity';
 import useLoading from '../hooks/useLoading';
+import { displayDepartment } from '../constants/departments';
 
 export default function AppointmentRequests() {
   const { showToast } = useToast();
@@ -126,7 +127,7 @@ export default function AppointmentRequests() {
                         {visibleAppointments.map((appointment) => (
                           <tr key={appointment._id}>
                             <td>{appointment.studentName}<br /><small>{appointment.registerNumber}</small></td>
-                            <td>{appointment.department}</td>
+                            <td>{displayDepartment(appointment.department)}</td>
                             <td className="appointment-datetime">{formatDate(appointment.date)}<br />{appointment.startTime}–{appointment.endTime}</td>
                             <td>{appointment.purpose}</td>
                             <td><StatusBadge status={appointment.status} /></td>

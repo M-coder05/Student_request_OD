@@ -7,6 +7,7 @@ import StudentHeader from '../components/StudentHeader';
 import Skeleton from '../components/Skeleton';
 import LoadError from '../components/LoadError';
 import useLoading from '../hooks/useLoading';
+import { displayDepartment } from '../constants/departments';
 
 export default function StaffDirectory() {
   const { user } = useAuth();
@@ -52,7 +53,7 @@ export default function StaffDirectory() {
                       {member.designation ? (
                         <p className="staff-directory-designation">{member.designation}</p>
                       ) : null}
-                      {member.department ? <p>Department: {member.department}</p> : null}
+                      {member.department ? <p>Department: {displayDepartment(member.department)}</p> : null}
                       {member.officeLocation ? <p>Office: {member.officeLocation}</p> : null}
                       {member.officeHours ? <p>Office hours: {member.officeHours}</p> : null}
                       {member.meetingTopics ? <p>Meeting topics: {member.meetingTopics}</p> : null}

@@ -7,7 +7,7 @@ import DemoBanner from '../components/DemoBanner';
 import NotificationBell from '../components/NotificationBell';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
-import { DEPARTMENT_CODES, normalizeDepartment } from '../constants/departments';
+import { DEPARTMENT_CODES, normalizeDepartment, displayDepartment } from '../constants/departments';
 
 const emptyForm = {
   name: '',
@@ -298,7 +298,7 @@ export default function StaffManagement() {
                     <tr key={member._id}>
                       <td>{member.name}</td>
                       <td>{member.role}</td>
-                      <td>{member.staffDepartment || member.department || 'Not set'}</td>
+                      <td>{displayDepartment(member.staffDepartment || member.department) || 'Not set'}</td>
                       <td>{member.designation || 'Not set'}</td>
                       <td>{member.officeLocation || 'Not set'}</td>
                       <td>{member.employeeId || member.registerNumber}</td>
