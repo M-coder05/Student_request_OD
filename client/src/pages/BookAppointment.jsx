@@ -20,11 +20,16 @@ const todayInKolkata = () => {
   return `${values.year}-${values.month}-${values.day}`;
 };
 
+const staffOptionLabel = (member) => {
+  const title = member.designation || staffRoleLabel(member.role);
+  const departmentName = displayDepartment(member.department);
+  const nameAndTitle = title ? `${member.name}, ${title}` : member.name;
+  return departmentName ? `${nameAndTitle} (${departmentName})` : nameAndTitle;
+};
+
 export default function BookAppointment() {
   const { user } = useAuth();
   const { showToast } = useToast();
-  const [staffRole, setStaffRole] = useState('faculty');
-  const [staffRoles, setStaffRoles] = useState([]);
   const [staff, setStaff] = useState([]);
   const [staffId, setStaffId] = useState('');
   const [date, setDate] = useState('');
@@ -37,15 +42,14 @@ export default function BookAppointment() {
   const [searchParams] = useSearchParams();
   const preferredStaffIdRef = useRef(searchParams.get('staff') || '');
 
-  const department = useMemo(
-    () => (staffRole === 'principal' ? '' : user?.department || ''),
-    [staffRole, user?.department]
-  );
+  const department = user?.department || '';
 
   const selectedStaff = useMemo(
     () => staff.find((member) => member._id === staffId),
     [staff, staffId]
   );
+
+  const purposeMinimum = selectedStaff?.role === 'principal' ? 30 : 10;
 
   useEffect(() => {
     let active = true;
@@ -55,31 +59,18 @@ export default function BookAppointment() {
     setStartTime('');
     setLoadingStaff(true);
     const query = new URLSearchParams();
-    if (staffRoles.length) query.set('role', staffRole);
     if (department) query.set('department', department);
     const queryString = query.toString();
     apiRequest(`/appointments/staff${queryString ? `?${queryString}` : ''}`)
       .then((result) => {
         if (!active) return;
-        const availableRoles = result.roles || [];
-        const availableStaff = result.staff || [];
-        setStaffRoles((currentRoles) => (
-          currentRoles.length === availableRoles.length &&
-          currentRoles.every((role, index) => role === availableRoles[index])
-            ? currentRoles
-            : availableRoles
-        ));
+        const availableStaff = [...(result.staff || [])].sort((a, b) => a.name.localeCompare(b.name));
         setStaff(availableStaff);
         const preferredStaff = preferredStaffIdRef.current
           ? availableStaff.find((member) => String(member._id) === String(preferredStaffIdRef.current))
           : null;
-        const nextRole = preferredStaff
-          ? preferredStaff.role
-          : (availableRoles.includes(staffRole) ? staffRole : availableRoles[0] || '');
-        setStaffRole(nextRole);
-        setStaffId(preferredStaff
-          ? preferredStaff._id
-          : (availableStaff.find((member) => member.role === nextRole)?._id || ''));
+        setStaffId(preferredStaff ? preferredStaff._id : (availableStaff[0]?._id || ''));
+        preferredStaffIdRef.current = '';
       })
       .catch((error) => showToast(error.message || 'Unable to load staff', 'error'))
       .finally(() => {
@@ -88,7 +79,7 @@ export default function BookAppointment() {
     return () => {
       active = false;
     };
-  }, [staffRole, staffRoles, department, showToast]);
+  }, [department, showToast]);
 
   useEffect(() => {
     if (!staffId || !date) {
@@ -143,46 +134,29 @@ export default function BookAppointment() {
           <p className="muted appointment-intro">Choose a staff member, then pick a free time on the date you need.</p>
           <div className="appointment-form">
             <div className="field-wrap">
-              {staffRoles.length > 1 ? (
-                <>
-                  <label htmlFor="appointmentStaffRole">Appointment with</label>
-                  <select id="appointmentStaffRole" value={staffRole} onChange={(event) => { preferredStaffIdRef.current = ''; setStaffRole(event.target.value); }}>
-                    {staffRoles.map((role) => (
-                      <option key={role} value={role}>
-                        {staffRoleLabel(role)}
-                      </option>
-                    ))}
-                  </select>
-                </>
-              ) : (
-                <>
-                  <label>Appointment with</label>
-                  <span>{staffRoles.length ? staffRoleLabel(staffRoles[0]) : 'No roles available'}</span>
-                </>
-              )}
-            </div>
-            <div className="field-wrap">
               <label htmlFor="appointmentStaff">Staff member</label>
-              <select id="appointmentStaff" value={staffId} onChange={(event) => setStaffId(event.target.value)} disabled={loadingStaff || !staff.length}>
-                {loadingStaff ? <option value="">Loading staff…</option> : null}
-                {!loadingStaff && !staff.length ? <option value="">No staff available</option> : null}
-                {staff.map((member) => (
-                  <option key={member._id} value={member._id}>
-                    {member.department ? `${member.name} (${displayDepartment(member.department)})` : member.name}
-                  </option>
-                ))}
-              </select>
+              {!loadingStaff && !staff.length ? (
+                <p className="muted">No staff in your department have set their availability yet.</p>
+              ) : (
+                <select id="appointmentStaff" value={staffId} onChange={(event) => setStaffId(event.target.value)} disabled={loadingStaff || !staff.length}>
+                  {loadingStaff ? <option value="">Loading staff…</option> : null}
+                  {staff.map((member) => (
+                    <option key={member._id} value={member._id}>
+                      {staffOptionLabel(member)}
+                    </option>
+                  ))}
+                </select>
+              )}
               {selectedStaff ? (
                 <div className="staff-selection-detail">
                   <span>
-                    {selectedStaff.name} · {staffRoleLabel(selectedStaff.role)}
+                    {selectedStaff.name} · {selectedStaff.designation || staffRoleLabel(selectedStaff.role)}
                     {selectedStaff.role === 'faculty' || selectedStaff.role === 'hod'
                       ? (selectedStaff.department
                         ? ` · Department: ${displayDepartment(selectedStaff.department)}`
                         : ' · Department not set')
                       : ''}
                   </span>
-                  {selectedStaff.designation ? <span>{selectedStaff.designation}</span> : null}
                   {selectedStaff.officeLocation ? <span>Office: {selectedStaff.officeLocation}</span> : null}
                   {selectedStaff.officeHours ? <span>Office hours: {selectedStaff.officeHours}</span> : null}
                 </div>
@@ -221,10 +195,10 @@ export default function BookAppointment() {
             </section>
             <div className="field-wrap appointment-purpose">
               <label htmlFor="appointmentPurpose">Purpose</label>
-              <textarea id="appointmentPurpose" value={purpose} onChange={(event) => setPurpose(event.target.value)} minLength={staffRole === 'principal' ? 30 : 10} maxLength={300} rows={4} required aria-describedby="appointmentPurposeRules appointmentPurposeCount" />
+              <textarea id="appointmentPurpose" value={purpose} onChange={(event) => setPurpose(event.target.value)} minLength={purposeMinimum} maxLength={300} rows={4} required aria-describedby="appointmentPurposeRules appointmentPurposeCount" />
               <div className="appointment-purpose-meta">
                 <small id="appointmentPurposeRules" className="muted">
-                  Minimum {staffRole === 'principal' ? 30 : 10} characters; maximum 300 characters.
+                  Minimum {purposeMinimum} characters; maximum 300 characters.
                 </small>
                 <small id="appointmentPurposeCount" className="appointment-purpose-count" aria-live="polite">{purpose.length}/300</small>
               </div>
