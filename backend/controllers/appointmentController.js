@@ -40,6 +40,25 @@ const getPrincipalPurposeLength = () => Math.floor(asPositiveNumber(process.env.
 
 const createAppointmentId = () => `APT-${Date.now().toString(36).toUpperCase()}-${crypto.randomBytes(3).toString('hex').toUpperCase()}`;
 
+const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+const formatDisplayDate = (isoDate) => {
+  if (typeof isoDate !== 'string') return isoDate;
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(isoDate);
+  if (!match) return isoDate;
+  const [, year, month, day] = match;
+  const monthIndex = Number(month) - 1;
+  const dayNumber = Number(day);
+  const daysInMonth = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+  const numericYear = Number(year);
+  const isLeapYear = (numericYear % 4 === 0 && numericYear % 100 !== 0) || numericYear % 400 === 0;
+  if (isLeapYear) daysInMonth[1] = 29;
+  if (monthIndex < 0 || monthIndex > 11 || dayNumber < 1 || dayNumber > daysInMonth[monthIndex]) {
+    return isoDate;
+  }
+  return `${day} ${MONTH_NAMES[monthIndex]} ${year}`;
+};
+
 const recordAudit = (actor, appointment, action, details) => AuditLog.create({
   administratorId: actor._id,
   administratorName: actor.name,
@@ -307,7 +326,7 @@ const createAppointment = async (req, res) => {
     throw error;
   }
 
-  const requestMessage = `${req.user.name} requested appointment ${appointment.appointmentId} for ${date} at ${startTime}.`;
+  const requestMessage = `${req.user.name} requested appointment ${appointment.appointmentId} for ${formatDisplayDate(date)} at ${startTime}.`;
   await Promise.all([
     notifyAppointmentUser(req.user, appointment, 'New', 'Pending', 'Appointment request submitted', requestMessage),
     notifyAppointmentUser(staff, appointment, 'New', 'Pending', 'Appointment request received', requestMessage),

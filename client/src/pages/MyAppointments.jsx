@@ -58,7 +58,7 @@ export default function MyAppointments() {
       <StudentHeader title="My appointments" />
       <main className="page-shell">
         <div className="container">
-          <section className="card">
+          <section className="card staff-page-card">
             <h2>My appointments</h2>
             {loading ? <p>Loading appointments…</p> : null}
             {!loading && appointments.length === 0 ? <p className="muted">You have no appointments yet.</p> : null}

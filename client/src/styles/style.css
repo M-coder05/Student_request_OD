@@ -3594,3 +3594,6 @@ tbody tr:hover { background: var(--paper-raised); }
   }
 }
 
+/* Appointment table date and time */
+.appointment-datetime { white-space: nowrap; }
+

@@ -127,7 +127,7 @@ export default function AppointmentRequests() {
                           <tr key={appointment._id}>
                             <td>{appointment.studentName}<br /><small>{appointment.registerNumber}</small></td>
                             <td>{appointment.department}</td>
-                            <td>{formatDate(appointment.date)}<br />{appointment.startTime}–{appointment.endTime}</td>
+                            <td className="appointment-datetime">{formatDate(appointment.date)}<br />{appointment.startTime}–{appointment.endTime}</td>
                             <td>{appointment.purpose}</td>
                             <td><StatusBadge status={appointment.status} /></td>
                             <td>{appointment.staffRemark || <span className="muted">No remark</span>}</td>

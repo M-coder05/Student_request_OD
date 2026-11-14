@@ -38,7 +38,7 @@ export default function Dashboard() {
     { href: '/complaint', title: 'Submit a complaint', description: 'Send a concern to the reviewing team.' },
     ...(appointmentsEnabled ? [
       { href: '/appointments/book', title: 'Appointment service', description: 'Book a meeting with your faculty or HOD.' },
-      { href: '/appointments', title: 'My appointments', description: 'Review requests and approved events.' },
+      { href: '/appointments', title: 'My appointments', description: 'See your appointment requests and approved bookings.' },
     ] : []),
     { href: '/status', title: 'Track requests', description: 'Check the latest status of submitted requests.' },
     { href: '/profile', title: 'My profile', description: 'View and update your student details.' },
