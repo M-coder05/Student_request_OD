@@ -82,11 +82,13 @@ module.exports = async () => {
       }],
     });
   } catch (error) {
-    await Appointment.deleteOne({ appointmentId: isolationAppointmentId });
-    await Promise.all([
-      User.deleteOne({ email: isolationEmail, isDemo: false }),
-      User.deleteOne({ registerNumber: isolationRegisterNumber, isDemo: false }),
-    ]);
+    if (mongoose.connection.readyState === 1) {
+      await Appointment.deleteOne({ appointmentId: isolationAppointmentId });
+      await Promise.all([
+        User.deleteOne({ email: isolationEmail, isDemo: false }),
+        User.deleteOne({ registerNumber: isolationRegisterNumber, isDemo: false }),
+      ]);
+    }
     throw error;
   } finally {
     await mongoose.disconnect();
